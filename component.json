@@ -1,7 +1,7 @@
 {
   "name"        : "handlebars.js",
   "version"     : "1.0.0-rc.1",
-  "main"        : ["handlebars-1.0.0-rc.1.js", "handlebars.runtime-1.0.0.rc.1.js"],
+  "main"        : ["handlebars.js", "handlebars.runtime.js"],
   "dependencies": {}
 }
 
