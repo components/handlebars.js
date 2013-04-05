@@ -1,0 +1,30 @@
+{
+    "name": "components/handlebars.js",
+    "description": "Handlebars.js and Mustache are both logicless templating languages that keep the view and the code separated like we all know they should be.",
+    "homepage": "http://handlebarsjs.com",
+    "license": "MIT",
+    "keywords": [
+        "handlebars",
+        "mustache",
+        "html"
+    ],
+    "authors": [
+        {
+            "name": "Chris Wanstrath",
+            "homepage": "http://chriswanstrath.com"
+        }
+    ],
+    "require": {
+        "robloach/component-installer": "*"
+    },
+    "extra": {
+        "component": {
+            "scripts": [
+                "handlebars.js"
+            ],
+            "shim": {
+                "exports": "Handlebars"
+            }
+        }
+    }
+}
