@@ -19,6 +19,7 @@
     },
     "extra": {
         "component": {
+            "name": "handlebars",
             "scripts": [
                 "handlebars.js"
             ],
