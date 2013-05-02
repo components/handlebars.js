@@ -1,7 +1,9 @@
 {
-  "name"        : "handlebars.js",
-  "version"     : "1.0.0-rc.3",
-  "main"        : ["handlebars.js", "handlebars.runtime.js"],
-  "dependencies": {}
+  "name": "handlebars",
+  "repo": "components/handlebars.js",
+  "version": "1.0.0-rc.3",
+  "scripts": [
+    "handlebars.js",
+    "handlebars.runtime.js"
+  ]
 }
-
