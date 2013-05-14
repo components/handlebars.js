@@ -3,6 +3,7 @@
     "description": "Handlebars.js and Mustache are both logicless templating languages that keep the view and the code separated like we all know they should be.",
     "homepage": "http://handlebarsjs.com",
     "license": "MIT",
+    "type": "component",
     "keywords": [
         "handlebars",
         "mustache",
@@ -22,6 +23,9 @@
             "name": "handlebars",
             "scripts": [
                 "handlebars.js"
+            ],
+            "files": [
+                "handlebars.runtime.js"
             ],
             "shim": {
                 "exports": "Handlebars"
