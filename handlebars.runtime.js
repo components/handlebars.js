@@ -1,6 +1,6 @@
 /*!
 
- handlebars v1.2.0
+ handlebars v1.2.1
 
 Copyright (C) 2011 by Yehuda Katz
 
@@ -154,7 +154,7 @@ var __module1__ = (function(__dependency1__, __dependency2__) {
   var Utils = __dependency1__;
   var Exception = __dependency2__;
 
-  var VERSION = "1.2.0";
+  var VERSION = "1.2.1";
   __exports__.VERSION = VERSION;var COMPILER_REVISION = 4;
   __exports__.COMPILER_REVISION = COMPILER_REVISION;
   var REVISION_CHANGES = {
