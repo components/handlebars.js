@@ -1,6 +1,6 @@
 /*!
 
- handlebars v1.2.1
+ handlebars v1.3.0
 
 Copyright (C) 2011 by Yehuda Katz
 
@@ -127,12 +127,24 @@ define(
 
     var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
 
-    function Exception(/* message */) {
-      var tmp = Error.prototype.constructor.apply(this, arguments);
+    function Exception(message, node) {
+      var line;
+      if (node && node.firstLine) {
+        line = node.firstLine;
+
+        message += ' - ' + line + ':' + node.firstColumn;
+      }
+
+      var tmp = Error.prototype.constructor.call(this, message);
 
       // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
       for (var idx = 0; idx < errorProps.length; idx++) {
         this[errorProps[idx]] = tmp[errorProps[idx]];
+      }
+
+      if (line) {
+        this.lineNumber = line;
+        this.column = node.firstColumn;
       }
     }
 
@@ -147,7 +159,7 @@ define(
     var Utils = __dependency1__;
     var Exception = __dependency2__["default"];
 
-    var VERSION = "1.2.1";
+    var VERSION = "1.3.0";
     __exports__.VERSION = VERSION;var COMPILER_REVISION = 4;
     __exports__.COMPILER_REVISION = COMPILER_REVISION;
     var REVISION_CHANGES = {
@@ -199,7 +211,7 @@ define(
         if(arguments.length === 2) {
           return undefined;
         } else {
-          throw new Error("Missing helper: '" + arg + "'");
+          throw new Exception("Missing helper: '" + arg + "'");
         }
       });
 
@@ -341,11 +353,11 @@ define(
         if (compilerRevision < currentRevision) {
           var runtimeVersions = REVISION_CHANGES[currentRevision],
               compilerVersions = REVISION_CHANGES[compilerRevision];
-          throw new Error("Template was precompiled with an older version of Handlebars than the current runtime. "+
+          throw new Exception("Template was precompiled with an older version of Handlebars than the current runtime. "+
                 "Please update your precompiler to a newer version ("+runtimeVersions+") or downgrade your runtime to an older version ("+compilerVersions+").");
         } else {
           // Use the embedded version info since the runtime doesn't know about this revision yet
-          throw new Error("Template was precompiled with a newer version of Handlebars than the current runtime. "+
+          throw new Exception("Template was precompiled with a newer version of Handlebars than the current runtime. "+
                 "Please update your runtime to a newer version ("+compilerInfo[1]+").");
         }
       }
@@ -355,7 +367,7 @@ define(
 
     function template(templateSpec, env) {
       if (!env) {
-        throw new Error("No environment passed to template");
+        throw new Exception("No environment passed to template");
       }
 
       // Note: Using env.VM references rather than local var references throughout this section to allow
