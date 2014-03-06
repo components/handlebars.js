@@ -1,6 +1,6 @@
 /*!
 
- handlebars vv2.0.0-alpha.1
+ handlebars v2.0.0-alpha.2
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -167,7 +167,7 @@ define(
     var Utils = __dependency1__;
     var Exception = __dependency2__["default"];
 
-    var VERSION = "v2.0.0-alpha.1";
+    var VERSION = "2.0.0-alpha.2";
     __exports__.VERSION = VERSION;var COMPILER_REVISION = 5;
     __exports__.COMPILER_REVISION = COMPILER_REVISION;
     var REVISION_CHANGES = {

@@ -1,6 +1,6 @@
 /*!
 
- handlebars vv2.0.0-alpha.1
+ handlebars v2.0.0-alpha.2
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -167,7 +167,7 @@ define(
     var Utils = __dependency1__;
     var Exception = __dependency2__["default"];
 
-    var VERSION = "v2.0.0-alpha.1";
+    var VERSION = "2.0.0-alpha.2";
     __exports__.VERSION = VERSION;var COMPILER_REVISION = 5;
     __exports__.COMPILER_REVISION = COMPILER_REVISION;
     var REVISION_CHANGES = {
@@ -1593,15 +1593,15 @@ define(
       },
 
       hash: function(hash) {
-        var pairs = hash.pairs, pair;
+        var pairs = hash.pairs, i, l;
 
         this.opcode('pushHash');
 
-        for(var i=0, l=pairs.length; i<l; i++) {
-          pair = pairs[i];
-
-          this.pushParam(pair[1]);
-          this.opcode('assignToHash', pair[0]);
+        for(i=0, l=pairs.length; i<l; i++) {
+          this.pushParam(pairs[i][1]);
+        }
+        while(i--) {
+          this.opcode('assignToHash', pairs[i][0]);
         }
         this.opcode('popHash');
       },
@@ -1777,9 +1777,7 @@ define(
       },
 
       pushParams: function(params) {
-        var i = params.length;
-
-        while(i--) {
+        for(var i=0, l=params.length; i<l; i++) {
           this.pushParam(params[i]);
         }
       },
@@ -1966,12 +1964,13 @@ define(
 
         this.compileChildren(environment, options);
 
-        var opcodes = environment.opcodes, opcode;
+        var opcodes = environment.opcodes,
+            opcode,
+            i,
+            l;
 
-        this.i = 0;
-
-        for(var l=opcodes.length; this.i<l; this.i++) {
-          opcode = opcodes[this.i];
+        for (i = 0, l = opcodes.length; i < l; i++) {
+          opcode = opcodes[i];
 
           if(opcode.opcode === 'DECLARE') {
             this[opcode.name] = opcode.value;
@@ -1998,11 +1997,12 @@ define(
             compiler: this.compilerInfo(),
             main: fn
           };
-          this.context.programs.map(function(program, index) {
-            if (program) {
-              ret[index] = program;
+          var programs = this.context.programs;
+          for (i = 0, l = programs.length; i < l; i++) {
+            if (programs[i]) {
+              ret[i] = programs[i];
             }
-          });
+          }
 
           if (this.environment.usePartial) {
             ret.usePartial = true;
@@ -2489,11 +2489,10 @@ define(
 
       // [assignToHash]
       //
-      // On stack, before: value, hash, ...
-      // On stack, after: hash, ...
+      // On stack, before: value, ..., hash, ...
+      // On stack, after: ..., hash, ...
       //
-      // Pops a value and hash off the stack, assigns `hash[key] = value`
-      // and pushes the hash back onto the stack.
+      // Pops a value off the stack and assigns it to the current hash
       assignToHash: function(key) {
         var value = this.popStack(),
             context,
@@ -2797,16 +2796,19 @@ define(
           options.inverse = inverse;
         }
 
-        for (var i = 0; i < paramSize; i++) {
+        // The parameters go on to the stack in order (making sure that they are evaluated in order)
+        // so we need to pop them off the stack in reverse order
+        var i = paramSize;
+        while (i--) {
           param = this.popStack();
-          params.push(param);
+          params[i] = param;
 
           if (this.trackIds) {
-            ids.push(this.popStack());
+            ids[i] = this.popStack();
           }
           if (this.stringParams) {
-            types.push(this.popStack());
-            contexts.push(this.popStack());
+            types[i] = this.popStack();
+            contexts[i] = this.popStack();
           }
         }
 
