@@ -1,6 +1,6 @@
 /*!
 
- handlebars v2.0.0-alpha.2
+ handlebars v2.0.0-alpha.3
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -174,7 +174,7 @@ var __module1__ = (function(__dependency1__, __dependency2__) {
   var Utils = __dependency1__;
   var Exception = __dependency2__;
 
-  var VERSION = "2.0.0-alpha.2";
+  var VERSION = "2.0.0-alpha.3";
   __exports__.VERSION = VERSION;var COMPILER_REVISION = 5;
   __exports__.COMPILER_REVISION = COMPILER_REVISION;
   var REVISION_CHANGES = {
@@ -483,13 +483,6 @@ var __module5__ = (function(__dependency1__, __dependency2__, __dependency3__) {
       },
       programWithDepth: env.VM.programWithDepth,
 
-      initData: function(context, data) {
-        if (!data || !('root' in data)) {
-          data = data ? createFrame(data) : {};
-          data.root = context;
-        }
-        return data;
-      },
       data: function(data, depth) {
         while (data && depth--) {
           data = data._parent;
@@ -512,28 +505,31 @@ var __module5__ = (function(__dependency1__, __dependency2__, __dependency3__) {
 
     var ret = function(context, options) {
       options = options || {};
-      var namespace = options.partial ? options : env,
-          helpers,
+      var helpers,
           partials,
           data = options.data;
 
-      if (!options.partial) {
-        helpers = container.helpers = container.merge(options.helpers, namespace.helpers);
-
-        if (templateSpec.usePartial) {
-          partials = container.partials = container.merge(options.partials, namespace.partials);
-        }
-        if (templateSpec.useData) {
-          data = container.initData(context, data);
-        }
-      } else {
-        helpers = container.helpers = options.helpers;
-        partials = container.partials = options.partials;
+      ret._setup(options);
+      if (!options.partial && templateSpec.useData) {
+        data = initData(context, data);
       }
-      return templateSpec.main.call(container, context, helpers, partials, data);
+      return templateSpec.main.call(container, context, container.helpers, container.partials, data);
     };
 
-    ret.child = function(i) {
+    ret._setup = function(options) {
+      if (!options.partial) {
+        container.helpers = container.merge(options.helpers, env.helpers);
+
+        if (templateSpec.usePartial) {
+          container.partials = container.merge(options.partials, env.partials);
+        }
+      } else {
+        container.helpers = options.helpers;
+        container.partials = options.partials;
+      }
+    };
+
+    ret._child = function(i) {
       return container.programWithDepth(i);
     };
     return ret;
@@ -578,7 +574,13 @@ var __module5__ = (function(__dependency1__, __dependency2__, __dependency3__) {
 
   __exports__.invokePartial = invokePartial;function noop() { return ""; }
 
-  __exports__.noop = noop;
+  __exports__.noop = noop;function initData(context, data) {
+    if (!data || !('root' in data)) {
+      data = data ? createFrame(data) : {};
+      data.root = context;
+    }
+    return data;
+  }
   return __exports__;
 })(__module2__, __module4__, __module1__);
 
