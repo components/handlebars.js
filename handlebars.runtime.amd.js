@@ -1,6 +1,6 @@
 /*!
 
- handlebars v2.0.0-beta.1
+ handlebars v2.0.0
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -171,7 +171,7 @@ define(
     var Utils = __dependency1__;
     var Exception = __dependency2__["default"];
 
-    var VERSION = "2.0.0-beta.1";
+    var VERSION = "2.0.0";
     __exports__.VERSION = VERSION;var COMPILER_REVISION = 6;
     __exports__.COMPILER_REVISION = COMPILER_REVISION;
     var REVISION_CHANGES = {
@@ -213,11 +213,11 @@ define(
         delete this.helpers[name];
       },
 
-      registerPartial: function(name, str) {
+      registerPartial: function(name, partial) {
         if (toString.call(name) === objectType) {
           Utils.extend(this.partials,  name);
         } else {
-          this.partials[name] = str;
+          this.partials[name] = partial;
         }
       },
       unregisterPartial: function(name) {
@@ -359,9 +359,9 @@ define(
         }
       });
 
-      instance.registerHelper('log', function(context, options) {
+      instance.registerHelper('log', function(message, options) {
         var level = options.data && options.data.level != null ? parseInt(options.data.level, 10) : 1;
-        instance.log(level, context);
+        instance.log(level, message);
       });
 
       instance.registerHelper('lookup', function(obj, field) {
@@ -380,11 +380,11 @@ define(
       level: 3,
 
       // can be overridden in the host environment
-      log: function(level, obj) {
+      log: function(level, message) {
         if (logger.level <= level) {
           var method = logger.methodMap[level];
           if (typeof console !== 'undefined' && console[method]) {
-            console[method].call(console, obj);
+            console[method].call(console, message);
           }
         }
       }

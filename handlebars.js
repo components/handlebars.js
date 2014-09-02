@@ -1,32 +1,6 @@
 /*!
 
- handlebars v2.0.0-beta.1
-
-Copyright (C) 2011-2014 by Yehuda Katz
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-@license
-*/
-/*!
-
- handlebars v2.0.0-beta.1
+ handlebars v2.0.0
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -212,7 +186,7 @@ var __module2__ = (function(__dependency1__, __dependency2__) {
   var Utils = __dependency1__;
   var Exception = __dependency2__;
 
-  var VERSION = "2.0.0-beta.1";
+  var VERSION = "2.0.0";
   __exports__.VERSION = VERSION;var COMPILER_REVISION = 6;
   __exports__.COMPILER_REVISION = COMPILER_REVISION;
   var REVISION_CHANGES = {
@@ -254,11 +228,11 @@ var __module2__ = (function(__dependency1__, __dependency2__) {
       delete this.helpers[name];
     },
 
-    registerPartial: function(name, str) {
+    registerPartial: function(name, partial) {
       if (toString.call(name) === objectType) {
         Utils.extend(this.partials,  name);
       } else {
-        this.partials[name] = str;
+        this.partials[name] = partial;
       }
     },
     unregisterPartial: function(name) {
@@ -400,9 +374,9 @@ var __module2__ = (function(__dependency1__, __dependency2__) {
       }
     });
 
-    instance.registerHelper('log', function(context, options) {
+    instance.registerHelper('log', function(message, options) {
       var level = options.data && options.data.level != null ? parseInt(options.data.level, 10) : 1;
-      instance.log(level, context);
+      instance.log(level, message);
     });
 
     instance.registerHelper('lookup', function(obj, field) {
@@ -421,11 +395,11 @@ var __module2__ = (function(__dependency1__, __dependency2__) {
     level: 3,
 
     // can be overridden in the host environment
-    log: function(level, obj) {
+    log: function(level, message) {
       if (logger.level <= level) {
         var method = logger.methodMap[level];
         if (typeof console !== 'undefined' && console[method]) {
-          console[method].call(console, obj);
+          console[method].call(console, message);
         }
       }
     }
