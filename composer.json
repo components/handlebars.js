@@ -15,9 +15,6 @@
             "homepage": "http://chriswanstrath.com"
         }
     ],
-    "require": {
-        "robloach/component-installer": "*"
-    },
     "extra": {
         "component": {
             "name": "handlebars",
