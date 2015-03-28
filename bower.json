@@ -2,5 +2,14 @@
   "name": "handlebars",
   "version": "3.0.0",
   "main": "handlebars.js",
-  "dependencies": {}
+  "dependencies": {},
+  "ignore": [
+    "lib",
+    ".*",
+    "*.gemspec",
+    "*.nuspec",
+    "component.json",
+    "composer.json",
+    "package.json"
+  ]
 }
