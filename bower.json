@@ -1,15 +1,6 @@
 {
   "name": "handlebars",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "main": "handlebars.js",
-  "dependencies": {},
-  "ignore": [
-    "lib",
-    ".*",
-    "*.gemspec",
-    "*.nuspec",
-    "component.json",
-    "composer.json",
-    "package.json"
-  ]
+  "dependencies": {}
 }
