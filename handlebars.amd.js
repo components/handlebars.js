@@ -1,6 +1,6 @@
 /*!
 
- handlebars v3.0.2
+ handlebars v3.0.3
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -36,7 +36,6 @@ define('handlebars/utils',['exports'], function (exports) {
   exports.isEmpty = isEmpty;
   exports.blockParams = blockParams;
   exports.appendContextPath = appendContextPath;
-  /*jshint -W004 */
   var escape = {
     '&': '&amp;',
     '<': '&lt;',
@@ -686,7 +685,23 @@ define('handlebars/runtime',['exports', './utils', './exception', './base'], fun
     return data;
   }
 });
-define('handlebars.runtime',['exports', 'module', './handlebars/base', './handlebars/safe-string', './handlebars/exception', './handlebars/utils', './handlebars/runtime'], function (exports, module, _handlebarsBase, _handlebarsSafeString, _handlebarsException, _handlebarsUtils, _handlebarsRuntime) {
+define('handlebars/no-conflict',['exports', 'module'], function (exports, module) {
+  /*global window */
+  
+
+  module.exports = function (Handlebars) {
+    /* istanbul ignore next */
+    var root = typeof global !== 'undefined' ? global : window,
+        $Handlebars = root.Handlebars;
+    /* istanbul ignore next */
+    Handlebars.noConflict = function () {
+      if (root.Handlebars === Handlebars) {
+        root.Handlebars = $Handlebars;
+      }
+    };
+  };
+});
+define('handlebars.runtime',['exports', 'module', './handlebars/base', './handlebars/safe-string', './handlebars/exception', './handlebars/utils', './handlebars/runtime', './handlebars/no-conflict'], function (exports, module, _handlebarsBase, _handlebarsSafeString, _handlebarsException, _handlebarsUtils, _handlebarsRuntime, _handlebarsNoConflict) {
   
 
   var _interopRequire = function (obj) { return obj && obj.__esModule ? obj['default'] : obj; };
@@ -697,6 +712,8 @@ define('handlebars.runtime',['exports', 'module', './handlebars/base', './handle
   var _SafeString = _interopRequire(_handlebarsSafeString);
 
   var _Exception = _interopRequire(_handlebarsException);
+
+  var _noConflict = _interopRequire(_handlebarsNoConflict);
 
   // For compatibility and usage outside of module systems, make the Handlebars object a namespace
   function create() {
@@ -716,25 +733,15 @@ define('handlebars.runtime',['exports', 'module', './handlebars/base', './handle
     return hb;
   }
 
-  var Handlebars = create();
-  Handlebars.create = create;
+  var inst = create();
+  inst.create = create;
 
-  /*jshint -W040 */
-  /* istanbul ignore next */
-  var root = typeof global !== 'undefined' ? global : window,
-      $Handlebars = root.Handlebars;
-  /* istanbul ignore next */
-  Handlebars.noConflict = function () {
-    if (root.Handlebars === Handlebars) {
-      root.Handlebars = $Handlebars;
-    }
-  };
+  _noConflict(inst);
 
-  Handlebars['default'] = Handlebars;
+  inst['default'] = inst;
 
-  module.exports = Handlebars;
+  module.exports = inst;
 });
-/*global window */;
 define('handlebars/compiler/ast',['exports', 'module'], function (exports, module) {
   
 
@@ -888,7 +895,6 @@ define('handlebars/compiler/ast',['exports', 'module'], function (exports, modul
   module.exports = AST;
 });
 define('handlebars/compiler/parser',["exports", "module"], function (exports, module) {
-    /* jshint ignore:start */
     /* istanbul ignore next */
     /* Jison generated parser */
     
@@ -1565,8 +1571,6 @@ define('handlebars/compiler/parser',["exports", "module"], function (exports, mo
         }Parser.prototype = parser;parser.Parser = Parser;
         return new Parser();
     })();module.exports = handlebars;
-
-    /* jshint ignore:end */
 });
 define('handlebars/compiler/visitor',['exports', 'module', '../exception', './ast'], function (exports, module, _exception, _ast) {
   
@@ -1953,7 +1957,6 @@ define('handlebars/compiler/helpers',['exports', '../exception'], function (expo
   }
 
   function preparePath(data, parts, locInfo) {
-    /*jshint -W040 */
     locInfo = this.locInfo(locInfo);
 
     var original = data ? '@' : '',
@@ -1985,7 +1988,6 @@ define('handlebars/compiler/helpers',['exports', '../exception'], function (expo
   }
 
   function prepareMustache(path, params, hash, open, strip, locInfo) {
-    /*jshint -W040 */
     // Must use charAt to support IE pre-10
     var escapeFlag = open.charAt(3) || open.charAt(2),
         escaped = escapeFlag !== '{' && escapeFlag !== '&';
@@ -1994,7 +1996,6 @@ define('handlebars/compiler/helpers',['exports', '../exception'], function (expo
   }
 
   function prepareRawBlock(openRawBlock, content, close, locInfo) {
-    /*jshint -W040 */
     if (openRawBlock.path.original !== close) {
       var errorNode = { loc: openRawBlock.path.loc };
 
@@ -2008,7 +2009,6 @@ define('handlebars/compiler/helpers',['exports', '../exception'], function (expo
   }
 
   function prepareBlock(openBlock, program, inverseAndProgram, close, inverted, locInfo) {
-    /*jshint -W040 */
     // When we are chaining inverse calls, we will not have a close path
     if (close && close.path && openBlock.path.original !== close.path.original) {
       var errorNode = { loc: openBlock.path.loc };
@@ -3187,7 +3187,6 @@ define('handlebars/compiler/javascript-compiler',['exports', 'module', '../base'
     //
     // Push the data lookup operator
     lookupData: function lookupData(depth, parts) {
-      /*jshint -W083 */
       if (!depth) {
         this.pushStackLiteral('data');
       } else {
@@ -3200,7 +3199,6 @@ define('handlebars/compiler/javascript-compiler',['exports', 'module', '../base'
     resolvePath: function resolvePath(type, parts, i, falsy) {
       var _this = this;
 
-      /*jshint -W083 */
       if (this.options.strict || this.options.assumeObjects) {
         this.push(strictLookup(this.options.strict, this, parts, type));
         return;
@@ -3814,12 +3812,12 @@ define('handlebars/compiler/javascript-compiler',['exports', 'module', '../base'
 
   module.exports = JavaScriptCompiler;
 });
-define('handlebars',['exports', 'module', './handlebars.runtime', './handlebars/compiler/ast', './handlebars/compiler/base', './handlebars/compiler/compiler', './handlebars/compiler/javascript-compiler', './handlebars/compiler/visitor'], function (exports, module, _handlebarsRuntime, _handlebarsCompilerAst, _handlebarsCompilerBase, _handlebarsCompilerCompiler, _handlebarsCompilerJavascriptCompiler, _handlebarsCompilerVisitor) {
+define('handlebars',['exports', 'module', './handlebars.runtime', './handlebars/compiler/ast', './handlebars/compiler/base', './handlebars/compiler/compiler', './handlebars/compiler/javascript-compiler', './handlebars/compiler/visitor', './handlebars/no-conflict'], function (exports, module, _handlebarsRuntime, _handlebarsCompilerAst, _handlebarsCompilerBase, _handlebarsCompilerCompiler, _handlebarsCompilerJavascriptCompiler, _handlebarsCompilerVisitor, _handlebarsNoConflict) {
   
 
   var _interopRequire = function (obj) { return obj && obj.__esModule ? obj['default'] : obj; };
 
-  var _Handlebars = _interopRequire(_handlebarsRuntime);
+  var _runtime = _interopRequire(_handlebarsRuntime);
 
   // Compiler imports
 
@@ -3829,7 +3827,9 @@ define('handlebars',['exports', 'module', './handlebars.runtime', './handlebars/
 
   var _Visitor = _interopRequire(_handlebarsCompilerVisitor);
 
-  var _create = _Handlebars.create;
+  var _noConflict = _interopRequire(_handlebarsNoConflict);
+
+  var _create = _runtime.create;
   function create() {
     var hb = _create();
 
@@ -3852,17 +3852,9 @@ define('handlebars',['exports', 'module', './handlebars.runtime', './handlebars/
   var inst = create();
   inst.create = create;
 
-  inst.Visitor = _Visitor;
+  _noConflict(inst);
 
-  /*jshint -W040 */
-  /* istanbul ignore next */
-  var $Handlebars = global.Handlebars;
-  /* istanbul ignore next */
-  inst.noConflict = function () {
-    if (global.Handlebars === inst) {
-      global.Handlebars = $Handlebars;
-    }
-  };
+  inst.Visitor = _Visitor;
 
   inst['default'] = inst;
 

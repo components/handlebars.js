@@ -1,6 +1,6 @@
 /*!
 
- handlebars v3.0.2
+ handlebars v3.0.3
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -36,7 +36,6 @@ define('handlebars/utils',['exports'], function (exports) {
   exports.isEmpty = isEmpty;
   exports.blockParams = blockParams;
   exports.appendContextPath = appendContextPath;
-  /*jshint -W004 */
   var escape = {
     '&': '&amp;',
     '<': '&lt;',
@@ -686,7 +685,23 @@ define('handlebars/runtime',['exports', './utils', './exception', './base'], fun
     return data;
   }
 });
-define('handlebars.runtime',['exports', 'module', './handlebars/base', './handlebars/safe-string', './handlebars/exception', './handlebars/utils', './handlebars/runtime'], function (exports, module, _handlebarsBase, _handlebarsSafeString, _handlebarsException, _handlebarsUtils, _handlebarsRuntime) {
+define('handlebars/no-conflict',['exports', 'module'], function (exports, module) {
+  /*global window */
+  
+
+  module.exports = function (Handlebars) {
+    /* istanbul ignore next */
+    var root = typeof global !== 'undefined' ? global : window,
+        $Handlebars = root.Handlebars;
+    /* istanbul ignore next */
+    Handlebars.noConflict = function () {
+      if (root.Handlebars === Handlebars) {
+        root.Handlebars = $Handlebars;
+      }
+    };
+  };
+});
+define('handlebars.runtime',['exports', 'module', './handlebars/base', './handlebars/safe-string', './handlebars/exception', './handlebars/utils', './handlebars/runtime', './handlebars/no-conflict'], function (exports, module, _handlebarsBase, _handlebarsSafeString, _handlebarsException, _handlebarsUtils, _handlebarsRuntime, _handlebarsNoConflict) {
   
 
   var _interopRequire = function (obj) { return obj && obj.__esModule ? obj['default'] : obj; };
@@ -697,6 +712,8 @@ define('handlebars.runtime',['exports', 'module', './handlebars/base', './handle
   var _SafeString = _interopRequire(_handlebarsSafeString);
 
   var _Exception = _interopRequire(_handlebarsException);
+
+  var _noConflict = _interopRequire(_handlebarsNoConflict);
 
   // For compatibility and usage outside of module systems, make the Handlebars object a namespace
   function create() {
@@ -716,22 +733,12 @@ define('handlebars.runtime',['exports', 'module', './handlebars/base', './handle
     return hb;
   }
 
-  var Handlebars = create();
-  Handlebars.create = create;
+  var inst = create();
+  inst.create = create;
 
-  /*jshint -W040 */
-  /* istanbul ignore next */
-  var root = typeof global !== 'undefined' ? global : window,
-      $Handlebars = root.Handlebars;
-  /* istanbul ignore next */
-  Handlebars.noConflict = function () {
-    if (root.Handlebars === Handlebars) {
-      root.Handlebars = $Handlebars;
-    }
-  };
+  _noConflict(inst);
 
-  Handlebars['default'] = Handlebars;
+  inst['default'] = inst;
 
-  module.exports = Handlebars;
+  module.exports = inst;
 });
-/*global window */;
