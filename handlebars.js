@@ -1,6 +1,6 @@
 /*!
 
- handlebars v4.0.0
+ handlebars v4.0.1
 
 Copyright (C) 2011-2015 by Yehuda Katz
 
@@ -1365,7 +1365,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var len = parts.length;
 	    for (; i < len; i++) {
-	      /*eslint-disable no-loop-func */
+	      /* eslint-disable no-loop-func */
 	      this.replaceStack(function (current) {
 	        var lookup = _this.nameLookup(current, parts[i], type);
 	        // We want to ensure that zero and false are handled properly if the context (falsy flag)
@@ -1377,7 +1377,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return [' && ', lookup];
 	        }
 	      });
-	      /*eslint-enable no-loop-func */
+	      /* eslint-enable no-loop-func */
 	    }
 	  },
 
@@ -1585,6 +1585,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    options.helpers = 'helpers';
 	    options.partials = 'partials';
+	    options.decorators = 'container.decorators';
 
 	    if (!isDynamic) {
 	      params.unshift(this.nameLookup('partials', name, 'partial'));
@@ -2145,7 +2146,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/*global window */
+	/* WEBPACK VAR INJECTION */(function(global) {/* global window */
 	'use strict';
 
 	exports.__esModule = true;
@@ -2229,7 +2230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.0.0';
+	var VERSION = '4.0.1';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 7;
 
@@ -2421,7 +2422,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// Sourced from lodash
 	// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
-	/*eslint-disable func-style */
+	/* eslint-disable func-style */
 	exports.toString = toString;
 	var isFunction = function isFunction(value) {
 	  return typeof value === 'function';
@@ -2435,7 +2436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	exports.isFunction = isFunction;
 
-	/*eslint-enable func-style */
+	/* eslint-enable func-style */
 
 	/* istanbul ignore next */
 	var isArray = Array.isArray || function (value) {
@@ -3997,7 +3998,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/*global define */
+	/* global define */
 	'use strict';
 
 	exports.__esModule = true;

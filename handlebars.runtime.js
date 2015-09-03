@@ -1,6 +1,6 @@
 /*!
 
- handlebars v4.0.0
+ handlebars v4.0.1
 
 Copyright (C) 2011-2015 by Yehuda Katz
 
@@ -169,7 +169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.0.0';
+	var VERSION = '4.0.1';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 7;
 
@@ -361,7 +361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// Sourced from lodash
 	// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
-	/*eslint-disable func-style */
+	/* eslint-disable func-style */
 	exports.toString = toString;
 	var isFunction = function isFunction(value) {
 	  return typeof value === 'function';
@@ -375,7 +375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	exports.isFunction = isFunction;
 
-	/*eslint-enable func-style */
+	/* eslint-enable func-style */
 
 	/* istanbul ignore next */
 	var isArray = Array.isArray || function (value) {
@@ -738,7 +738,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/*global window */
+	/* WEBPACK VAR INJECTION */(function(global) {/* global window */
 	'use strict';
 
 	exports.__esModule = true;
