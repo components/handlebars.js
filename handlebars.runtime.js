@@ -1,6 +1,6 @@
 /*!
 
- handlebars v4.0.1
+ handlebars v4.0.2
 
 Copyright (C) 2011-2015 by Yehuda Katz
 
@@ -169,7 +169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.0.1';
+	var VERSION = '4.0.2';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 7;
 
@@ -629,7 +629,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (templateSpec.usePartial) {
 	        container.partials = container.merge(options.partials, env.partials);
 	      }
-	      if (templateSpec.useDecorators) {
+	      if (templateSpec.usePartial || templateSpec.useDecorators) {
 	        container.decorators = container.merge(options.decorators, env.decorators);
 	      }
 	    } else {
