@@ -1,6 +1,6 @@
 /*!
 
- handlebars v3.0.4
+ handlebars v3.0.5
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
