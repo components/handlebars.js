@@ -1,6 +1,6 @@
 /*!
 
- handlebars v3.0.5
+ handlebars v3.0.6
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -40,12 +40,13 @@ define('handlebars/utils',['exports'], function (exports) {
     '>': '&gt;',
     '"': '&quot;',
     "'": '&#x27;',
-    '`': '&#x60;',
-    '=': '&#x3D;'
+    '`': '&#x60;'
+    // The "equals-sign" is intentionally excluded from this list
+    // due to semantic-versioning issues (see #1489)
   };
 
-  var badChars = /[&<>"'`=]/g,
-      possible = /[&<>"'`=]/;
+  var badChars = /[&<>"'`]/g,
+      possible = /[&<>"'`]/;
 
   function escapeChar(chr) {
     return escape[chr];
@@ -166,13 +167,28 @@ define('handlebars/exception',['exports', 'module'], function (exports, module) 
       this[errorProps[idx]] = tmp[errorProps[idx]];
     }
 
+    /* istanbul ignore else */
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, Exception);
     }
 
-    if (loc) {
-      this.lineNumber = line;
-      this.column = column;
+    try {
+      if (loc) {
+        this.lineNumber = line;
+
+        // Work around issue under safari where we can't directly set the column value
+        /* istanbul ignore next */
+        if (Object.defineProperty) {
+          Object.defineProperty(this, 'column', {
+            value: column,
+            enumerable: true
+          });
+        } else {
+          this.column = column;
+        }
+      }
+    } catch (nop) {
+      /* Ignore if the browser is very particular */
     }
   }
 

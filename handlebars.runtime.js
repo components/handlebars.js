@@ -1,6 +1,6 @@
 /*!
 
- handlebars v3.0.5
+ handlebars v3.0.6
 
 Copyright (C) 2011-2014 by Yehuda Katz
 
@@ -95,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Each of these augment the Handlebars object. No need to setup here.
 	// (This is done to easily share code between commonjs and browse envs)
 
-	var _handlebarsSafeString = __webpack_require__(6);
+	var _handlebarsSafeString = __webpack_require__(9);
 
 	var _handlebarsSafeString2 = _interopRequireDefault(_handlebarsSafeString);
 
@@ -107,11 +107,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Utils = _interopRequireWildcard(_handlebarsUtils);
 
-	var _handlebarsRuntime = __webpack_require__(7);
+	var _handlebarsRuntime = __webpack_require__(10);
 
 	var runtime = _interopRequireWildcard(_handlebarsRuntime);
 
-	var _handlebarsNoConflict = __webpack_require__(8);
+	var _handlebarsNoConflict = __webpack_require__(11);
 
 	var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
 
@@ -479,12 +479,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  '>': '&gt;',
 	  '"': '&quot;',
 	  "'": '&#x27;',
-	  '`': '&#x60;',
-	  '=': '&#x3D;'
+	  '`': '&#x60;'
+	  // The "equals-sign" is intentionally excluded from this list
+	  // due to semantic-versioning issues (see #1489)
 	};
 
-	var badChars = /[&<>"'`=]/g,
-	    possible = /[&<>"'`=]/;
+	var badChars = /[&<>"'`]/g,
+	    possible = /[&<>"'`]/;
 
 	function escapeChar(chr) {
 	  return escape[chr];
@@ -583,9 +584,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
+
+	var _Object$defineProperty = __webpack_require__(6)['default'];
 
 	exports.__esModule = true;
 
@@ -609,13 +612,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this[errorProps[idx]] = tmp[errorProps[idx]];
 	  }
 
+	  /* istanbul ignore else */
 	  if (Error.captureStackTrace) {
 	    Error.captureStackTrace(this, Exception);
 	  }
 
-	  if (loc) {
-	    this.lineNumber = line;
-	    this.column = column;
+	  try {
+	    if (loc) {
+	      this.lineNumber = line;
+
+	      // Work around issue under safari where we can't directly set the column value
+	      /* istanbul ignore next */
+	      if (_Object$defineProperty) {
+	        Object.defineProperty(this, 'column', {
+	          value: column,
+	          enumerable: true
+	        });
+	      } else {
+	        this.column = column;
+	      }
+	    }
+	  } catch (nop) {
+	    /* Ignore if the browser is very particular */
 	  }
 	}
 
@@ -626,6 +644,39 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(7), __esModule: true };
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var $ = __webpack_require__(8);
+	module.exports = function defineProperty(it, key, desc){
+	  return $.setDesc(it, key, desc);
+	};
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+	var $Object = Object;
+	module.exports = {
+	  create:     $Object.create,
+	  getProto:   $Object.getPrototypeOf,
+	  isEnum:     {}.propertyIsEnumerable,
+	  getDesc:    $Object.getOwnPropertyDescriptor,
+	  setDesc:    $Object.defineProperty,
+	  setDescs:   $Object.defineProperties,
+	  getKeys:    $Object.keys,
+	  getNames:   $Object.getOwnPropertyNames,
+	  getSymbols: $Object.getOwnPropertySymbols,
+	  each:       [].forEach
+	};
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports) {
 
 	// Build out our basic SafeString type
@@ -644,7 +695,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ }),
-/* 7 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -880,7 +931,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 8 */
+/* 11 */
 /***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*global window */
