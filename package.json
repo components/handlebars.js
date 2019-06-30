@@ -1,5 +1,6 @@
 {
-  "version": "4.0.11",
+  "name": "handlebars",
+  "version": "3.0.7",
   "license": "MIT",
   "jspm": {
     "main": "handlebars",
