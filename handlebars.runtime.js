@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.2.0
+ handlebars v4.2.1
 
 Copyright (C) 2011-2017 by Yehuda Katz
 
@@ -207,7 +207,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.2.0';
+	var VERSION = '4.2.1';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 7;
 
@@ -1029,7 +1029,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  templateSpec.main.decorator = templateSpec.main_d;
 
 	  // Note: Using env.VM references rather than local var references throughout this section to allow
-	  // for external users to override these as psuedo-supported APIs.
+	  // for external users to override these as pseudo-supported APIs.
 	  env.VM.checkRevision(templateSpec.compiler);
 
 	  function invokePartialWrapper(partial, context, options) {
