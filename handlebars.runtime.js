@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.2.1
+ handlebars v4.3.0
 
 Copyright (C) 2011-2017 by Yehuda Katz
 
@@ -207,9 +207,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.2.1';
+	var VERSION = '4.3.0';
 	exports.VERSION = VERSION;
-	var COMPILER_REVISION = 7;
+	var COMPILER_REVISION = 8;
 
 	exports.COMPILER_REVISION = COMPILER_REVISION;
 	var REVISION_CHANGES = {
@@ -219,7 +219,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  4: '== 1.x.x',
 	  5: '== 2.0.0-alpha.x',
 	  6: '>= 2.0.0-beta.1',
-	  7: '>= 4.0.0'
+	  7: '>= 4.0.0 <4.3.0',
+	  8: '>= 4.3.0'
 	};
 
 	exports.REVISION_CHANGES = REVISION_CHANGES;
@@ -303,6 +304,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.createFrame = createFrame;
 	exports.blockParams = blockParams;
 	exports.appendContextPath = appendContextPath;
+
 	var escape = {
 	  '&': '&amp;',
 	  '<': '&lt;',
@@ -520,6 +522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.__esModule = true;
 	exports.registerDefaultHelpers = registerDefaultHelpers;
+	exports.moveHelperToHooks = moveHelperToHooks;
 
 	var _helpersBlockHelperMissing = __webpack_require__(10);
 
@@ -557,6 +560,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _helpersLog2['default'](instance);
 	  _helpersLookup2['default'](instance);
 	  _helpersWith2['default'](instance);
+	}
+
+	function moveHelperToHooks(instance, helperName, keepHelper) {
+	  if (instance.helpers[helperName]) {
+	    instance.hooks[helperName] = instance.helpers[helperName];
+	    if (!keepHelper) {
+	      delete instance.helpers[helperName];
+	    }
+	  }
 	}
 
 /***/ }),
@@ -1001,6 +1013,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _base = __webpack_require__(3);
 
+	var _helpers = __webpack_require__(9);
+
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
 	      currentRevision = _base.COMPILER_REVISION;
@@ -1018,6 +1032,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function template(templateSpec, env) {
+
 	  /* istanbul ignore next */
 	  if (!env) {
 	    throw new _exception2['default']('No environment passed to template');
@@ -1039,13 +1054,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.ids[0] = true;
 	      }
 	    }
-
 	    partial = env.VM.resolvePartial.call(this, partial, context, options);
-	    var result = env.VM.invokePartial.call(this, partial, context, options);
+
+	    var optionsWithHooks = Utils.extend({}, options, { hooks: this.hooks });
+
+	    var result = env.VM.invokePartial.call(this, partial, context, optionsWithHooks);
 
 	    if (result == null && env.compile) {
 	      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
-	      result = options.partials[options.name](context, options);
+	      result = options.partials[options.name](context, optionsWithHooks);
 	    }
 	    if (result != null) {
 	      if (options.indent) {
@@ -1112,15 +1129,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      return value;
 	    },
-	    merge: function merge(param, common) {
-	      var obj = param || common;
-
-	      if (param && common && param !== common) {
-	        obj = Utils.extend({}, common, param);
-	      }
-
-	      return obj;
-	    },
 	    // An empty object to use as replacement for null-contexts
 	    nullContext: _Object$seal({}),
 
@@ -1157,18 +1165,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  ret._setup = function (options) {
 	    if (!options.partial) {
-	      container.helpers = container.merge(options.helpers, env.helpers);
+	      container.helpers = Utils.extend({}, env.helpers, options.helpers);
 
 	      if (templateSpec.usePartial) {
-	        container.partials = container.merge(options.partials, env.partials);
+	        container.partials = Utils.extend({}, env.partials, options.partials);
 	      }
 	      if (templateSpec.usePartial || templateSpec.useDecorators) {
-	        container.decorators = container.merge(options.decorators, env.decorators);
+	        container.decorators = Utils.extend({}, env.decorators, options.decorators);
 	      }
+
+	      container.hooks = {};
+	      var keepHelper = options.allowCallsToHelperMissing;
+	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelper);
+	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelper);
 	    } else {
 	      container.helpers = options.helpers;
 	      container.partials = options.partials;
 	      container.decorators = options.decorators;
+	      container.hooks = options.hooks;
 	    }
 	  };
 

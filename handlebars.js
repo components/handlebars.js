@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.2.1
+ handlebars v4.3.0
 
 Copyright (C) 2011-2017 by Yehuda Katz
 
@@ -275,9 +275,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.2.1';
+	var VERSION = '4.3.0';
 	exports.VERSION = VERSION;
-	var COMPILER_REVISION = 7;
+	var COMPILER_REVISION = 8;
 
 	exports.COMPILER_REVISION = COMPILER_REVISION;
 	var REVISION_CHANGES = {
@@ -287,7 +287,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  4: '== 1.x.x',
 	  5: '== 2.0.0-alpha.x',
 	  6: '>= 2.0.0-beta.1',
-	  7: '>= 4.0.0'
+	  7: '>= 4.0.0 <4.3.0',
+	  8: '>= 4.3.0'
 	};
 
 	exports.REVISION_CHANGES = REVISION_CHANGES;
@@ -371,6 +372,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.createFrame = createFrame;
 	exports.blockParams = blockParams;
 	exports.appendContextPath = appendContextPath;
+
 	var escape = {
 	  '&': '&amp;',
 	  '<': '&lt;',
@@ -588,6 +590,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.__esModule = true;
 	exports.registerDefaultHelpers = registerDefaultHelpers;
+	exports.moveHelperToHooks = moveHelperToHooks;
 
 	var _helpersBlockHelperMissing = __webpack_require__(11);
 
@@ -625,6 +628,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _helpersLog2['default'](instance);
 	  _helpersLookup2['default'](instance);
 	  _helpersWith2['default'](instance);
+	}
+
+	function moveHelperToHooks(instance, helperName, keepHelper) {
+	  if (instance.helpers[helperName]) {
+	    instance.hooks[helperName] = instance.helpers[helperName];
+	    if (!keepHelper) {
+	      delete instance.helpers[helperName];
+	    }
+	  }
 	}
 
 /***/ }),
@@ -1069,6 +1081,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _base = __webpack_require__(4);
 
+	var _helpers = __webpack_require__(10);
+
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
 	      currentRevision = _base.COMPILER_REVISION;
@@ -1086,6 +1100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function template(templateSpec, env) {
+
 	  /* istanbul ignore next */
 	  if (!env) {
 	    throw new _exception2['default']('No environment passed to template');
@@ -1107,13 +1122,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.ids[0] = true;
 	      }
 	    }
-
 	    partial = env.VM.resolvePartial.call(this, partial, context, options);
-	    var result = env.VM.invokePartial.call(this, partial, context, options);
+
+	    var optionsWithHooks = Utils.extend({}, options, { hooks: this.hooks });
+
+	    var result = env.VM.invokePartial.call(this, partial, context, optionsWithHooks);
 
 	    if (result == null && env.compile) {
 	      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
-	      result = options.partials[options.name](context, options);
+	      result = options.partials[options.name](context, optionsWithHooks);
 	    }
 	    if (result != null) {
 	      if (options.indent) {
@@ -1180,15 +1197,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      return value;
 	    },
-	    merge: function merge(param, common) {
-	      var obj = param || common;
-
-	      if (param && common && param !== common) {
-	        obj = Utils.extend({}, common, param);
-	      }
-
-	      return obj;
-	    },
 	    // An empty object to use as replacement for null-contexts
 	    nullContext: _Object$seal({}),
 
@@ -1225,18 +1233,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  ret._setup = function (options) {
 	    if (!options.partial) {
-	      container.helpers = container.merge(options.helpers, env.helpers);
+	      container.helpers = Utils.extend({}, env.helpers, options.helpers);
 
 	      if (templateSpec.usePartial) {
-	        container.partials = container.merge(options.partials, env.partials);
+	        container.partials = Utils.extend({}, env.partials, options.partials);
 	      }
 	      if (templateSpec.usePartial || templateSpec.useDecorators) {
-	        container.decorators = container.merge(options.decorators, env.decorators);
+	        container.decorators = Utils.extend({}, env.decorators, options.decorators);
 	      }
+
+	      container.hooks = {};
+	      var keepHelper = options.allowCallsToHelperMissing;
+	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelper);
+	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelper);
 	    } else {
 	      container.helpers = options.helpers;
 	      container.partials = options.partials;
 	      container.decorators = options.decorators;
+	      container.hooks = options.hooks;
 	    }
 	  };
 
@@ -4084,7 +4098,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // replace it on the stack with the result of properly
 	  // invoking blockHelperMissing.
 	  blockValue: function blockValue(name) {
-	    var blockHelperMissing = this.aliasable('helpers.blockHelperMissing'),
+	    var blockHelperMissing = this.aliasable('container.hooks.blockHelperMissing'),
 	        params = [this.contextName(0)];
 	    this.setupHelperArgs(name, 0, params);
 
@@ -4102,7 +4116,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // On stack, after, if lastHelper: value
 	  ambiguousBlockValue: function ambiguousBlockValue() {
 	    // We're being a bit cheeky and reusing the options value from the prior exec
-	    var blockHelperMissing = this.aliasable('helpers.blockHelperMissing'),
+	    var blockHelperMissing = this.aliasable('container.hooks.blockHelperMissing'),
 	        params = [this.contextName(0)];
 	    this.setupHelperArgs('', 0, params, true);
 
@@ -4393,18 +4407,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // If the helper is not found, `helperMissing` is called.
 	  invokeHelper: function invokeHelper(paramSize, name, isSimple) {
 	    var nonHelper = this.popStack(),
-	        helper = this.setupHelper(paramSize, name),
-	        simple = isSimple ? [helper.name, ' || '] : '';
+	        helper = this.setupHelper(paramSize, name);
 
-	    var lookup = ['('].concat(simple, nonHelper);
-	    if (!this.options.strict) {
-	      lookup.push(' || ', this.aliasable('helpers.helperMissing'));
+	    var possibleFunctionCalls = [];
+
+	    if (isSimple) {
+	      // direct call to helper
+	      possibleFunctionCalls.push(helper.name);
 	    }
-	    lookup.push(')');
+	    // call a function from the input object
+	    possibleFunctionCalls.push(nonHelper);
+	    if (!this.options.strict) {
+	      possibleFunctionCalls.push(this.aliasable('container.hooks.helperMissing'));
+	    }
 
-	    this.push(this.source.functionCall(lookup, 'call', helper.callParams));
+	    var functionLookupCode = ['(', this.itemsSeparatedBy(possibleFunctionCalls, '||'), ')'];
+	    var functionCall = this.source.functionCall(functionLookupCode, 'call', helper.callParams);
+	    this.push(functionCall);
 	  },
 
+	  itemsSeparatedBy: function itemsSeparatedBy(items, separator) {
+	    var result = [];
+	    result.push(items[0]);
+	    for (var i = 1; i < items.length; i++) {
+	      result.push(separator, items[i]);
+	    }
+	    return result;
+	  },
 	  // [invokeKnownHelper]
 	  //
 	  // On stack, before: hash, inverse, program, params..., ...
@@ -4442,7 +4471,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var lookup = ['(', '(helper = ', helperName, ' || ', nonHelper, ')'];
 	    if (!this.options.strict) {
 	      lookup[0] = '(helper = ';
-	      lookup.push(' != null ? helper : ', this.aliasable('helpers.helperMissing'));
+	      lookup.push(' != null ? helper : ', this.aliasable('container.hooks.helperMissing'));
 	    }
 
 	    this.push(['(', lookup, helper.paramsInit ? ['),(', helper.paramsInit] : [], '),', '(typeof helper === ', this.aliasable('"function"'), ' ? ', this.source.functionCall('helper', 'call', helper.callParams), ' : helper))']);
