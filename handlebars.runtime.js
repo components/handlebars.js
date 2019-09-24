@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.3.0
+ handlebars v4.3.1
 
 Copyright (C) 2011-2017 by Yehuda Katz
 
@@ -207,11 +207,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.3.0';
+	var VERSION = '4.3.1';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
-
 	exports.COMPILER_REVISION = COMPILER_REVISION;
+	var LAST_COMPATIBLE_COMPILER_REVISION = 7;
+
+	exports.LAST_COMPATIBLE_COMPILER_REVISION = LAST_COMPATIBLE_COMPILER_REVISION;
 	var REVISION_CHANGES = {
 	  1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
 	  2: '== 1.0.0-rc.3',
@@ -1019,15 +1021,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
 	      currentRevision = _base.COMPILER_REVISION;
 
-	  if (compilerRevision !== currentRevision) {
-	    if (compilerRevision < currentRevision) {
-	      var runtimeVersions = _base.REVISION_CHANGES[currentRevision],
-	          compilerVersions = _base.REVISION_CHANGES[compilerRevision];
-	      throw new _exception2['default']('Template was precompiled with an older version of Handlebars than the current runtime. ' + 'Please update your precompiler to a newer version (' + runtimeVersions + ') or downgrade your runtime to an older version (' + compilerVersions + ').');
-	    } else {
-	      // Use the embedded version info since the runtime doesn't know about this revision yet
-	      throw new _exception2['default']('Template was precompiled with a newer version of Handlebars than the current runtime. ' + 'Please update your runtime to a newer version (' + compilerInfo[1] + ').');
-	    }
+	  if (compilerRevision >= _base.LAST_COMPATIBLE_COMPILER_REVISION && compilerRevision <= _base.COMPILER_REVISION) {
+	    return;
+	  }
+
+	  if (compilerRevision < _base.LAST_COMPATIBLE_COMPILER_REVISION) {
+	    var runtimeVersions = _base.REVISION_CHANGES[currentRevision],
+	        compilerVersions = _base.REVISION_CHANGES[compilerRevision];
+	    throw new _exception2['default']('Template was precompiled with an older version of Handlebars than the current runtime. ' + 'Please update your precompiler to a newer version (' + runtimeVersions + ') or downgrade your runtime to an older version (' + compilerVersions + ').');
+	  } else {
+	    // Use the embedded version info since the runtime doesn't know about this revision yet
+	    throw new _exception2['default']('Template was precompiled with a newer version of Handlebars than the current runtime. ' + 'Please update your runtime to a newer version (' + compilerInfo[1] + ').');
 	  }
 	}
 
@@ -1046,6 +1050,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Note: Using env.VM references rather than local var references throughout this section to allow
 	  // for external users to override these as pseudo-supported APIs.
 	  env.VM.checkRevision(templateSpec.compiler);
+
+	  // backwards compatibility for precompiled templates with compiler-version 7 (<4.3.0)
+	  var templateWasPrecompiledWithCompilerV7 = templateSpec.compiler && templateSpec.compiler[0] === 7;
 
 	  function invokePartialWrapper(partial, context, options) {
 	    if (options.hash) {
@@ -1175,9 +1182,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      container.hooks = {};
-	      var keepHelper = options.allowCallsToHelperMissing;
-	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelper);
-	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelper);
+
+	      var keepHelperInHelpers = options.allowCallsToHelperMissing || templateWasPrecompiledWithCompilerV7;
+	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelperInHelpers);
+	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelperInHelpers);
 	    } else {
 	      container.helpers = options.helpers;
 	      container.partials = options.partials;
