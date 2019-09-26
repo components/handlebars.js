@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.3.1
+ handlebars v4.3.2
 
 Copyright (C) 2011-2017 by Yehuda Katz
 
@@ -275,7 +275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.3.1';
+	var VERSION = '4.3.2';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
 	exports.COMPILER_REVISION = COMPILER_REVISION;
@@ -3807,12 +3807,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // alternative compiled forms for name lookup and buffering semantics
 	  nameLookup: function nameLookup(parent, name /* , type*/) {
 	    if (name === 'constructor') {
-	      return ['(', parent, '.propertyIsEnumerable(\'constructor\') ? ', parent, '.constructor : undefined', ')'];
+	      return ['(', _isEnumerable(), '?', _actualLookup(), ' : undefined)'];
 	    }
-	    if (JavaScriptCompiler.isValidJavaScriptVariableName(name)) {
-	      return [parent, '.', name];
-	    } else {
-	      return [parent, '[', JSON.stringify(name), ']'];
+	    return _actualLookup();
+
+	    function _isEnumerable() {
+	      return 'Object.prototype.propertyIsEnumerable.call(' + parent + ',\'constructor\')';
+	    }
+
+	    function _actualLookup() {
+	      if (JavaScriptCompiler.isValidJavaScriptVariableName(name)) {
+	        return [parent, '.', name];
+	      } else {
+	        return [parent, '[', JSON.stringify(name), ']'];
+	      }
 	    }
 	  },
 	  depthedLookup: function depthedLookup(name) {
