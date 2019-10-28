@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.4.5
+ handlebars v4.5.0
 
 Copyright (C) 2011-2017 by Yehuda Katz
 
@@ -128,6 +128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  hb.JavaScriptCompiler = _handlebarsCompilerJavascriptCompiler2['default'];
 	  hb.Parser = _handlebarsCompilerBase.parser;
 	  hb.parse = _handlebarsCompilerBase.parse;
+	  hb.parseWithoutProcessing = _handlebarsCompilerBase.parseWithoutProcessing;
 
 	  return hb;
 	}
@@ -275,7 +276,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.4.5';
+	var VERSION = '4.5.0';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
 	exports.COMPILER_REVISION = COMPILER_REVISION;
@@ -499,15 +500,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.__esModule = true;
 
-	var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
+	var errorProps = ['description', 'fileName', 'lineNumber', 'endLineNumber', 'message', 'name', 'number', 'stack'];
 
 	function Exception(message, node) {
 	  var loc = node && node.loc,
 	      line = undefined,
-	      column = undefined;
+	      endLineNumber = undefined,
+	      column = undefined,
+	      endColumn = undefined;
+
 	  if (loc) {
 	    line = loc.start.line;
+	    endLineNumber = loc.end.line;
 	    column = loc.start.column;
+	    endColumn = loc.end.column;
 
 	    message += ' - ' + line + ':' + column;
 	  }
@@ -527,6 +533,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  try {
 	    if (loc) {
 	      this.lineNumber = line;
+	      this.endLineNumber = endLineNumber;
 
 	      // Work around issue under safari where we can't directly set the column value
 	      /* istanbul ignore next */
@@ -535,8 +542,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	          value: column,
 	          enumerable: true
 	        });
+	        Object.defineProperty(this, 'endColumn', {
+	          value: endColumn,
+	          enumerable: true
+	        });
 	      } else {
 	        this.column = column;
+	        this.endColumn = endColumn;
 	      }
 	    }
 	  } catch (nop) {
@@ -826,12 +838,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _interopRequireDefault = __webpack_require__(1)['default'];
+
 	exports.__esModule = true;
 
 	var _utils = __webpack_require__(5);
 
+	var _exception = __webpack_require__(6);
+
+	var _exception2 = _interopRequireDefault(_exception);
+
 	exports['default'] = function (instance) {
 	  instance.registerHelper('if', function (conditional, options) {
+	    if (arguments.length != 2) {
+	      throw new _exception2['default']('#if requires exactly one argument');
+	    }
 	    if (_utils.isFunction(conditional)) {
 	      conditional = conditional.call(this);
 	    }
@@ -847,6 +868,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  });
 
 	  instance.registerHelper('unless', function (conditional, options) {
+	    if (arguments.length != 2) {
+	      throw new _exception2['default']('#unless requires exactly one argument');
+	    }
 	    return instance.helpers['if'].call(this, conditional, { fn: options.inverse, inverse: options.fn, hash: options.hash });
 	  });
 	};
@@ -911,12 +935,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _interopRequireDefault = __webpack_require__(1)['default'];
+
 	exports.__esModule = true;
 
 	var _utils = __webpack_require__(5);
 
+	var _exception = __webpack_require__(6);
+
+	var _exception2 = _interopRequireDefault(_exception);
+
 	exports['default'] = function (instance) {
 	  instance.registerHelper('with', function (context, options) {
+	    if (arguments.length != 2) {
+	      throw new _exception2['default']('#with requires exactly one argument');
+	    }
 	    if (_utils.isFunction(context)) {
 	      context = context.call(this);
 	    }
@@ -1170,9 +1203,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // Just add water
 	  var container = {
-	    strict: function strict(obj, name) {
-	      if (!(name in obj)) {
-	        throw new _exception2['default']('"' + name + '" not defined in ' + obj);
+	    strict: function strict(obj, name, loc) {
+	      if (!obj || !(name in obj)) {
+	        throw new _exception2['default']('"' + name + '" not defined in ' + obj, { loc: loc });
 	      }
 	      return obj[name];
 	    },
@@ -1619,6 +1652,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _interopRequireWildcard = __webpack_require__(3)['default'];
 
 	exports.__esModule = true;
+	exports.parseWithoutProcessing = parseWithoutProcessing;
 	exports.parse = parse;
 
 	var _parser = __webpack_require__(37);
@@ -1640,7 +1674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var yy = {};
 	_utils.extend(yy, Helpers);
 
-	function parse(input, options) {
+	function parseWithoutProcessing(input, options) {
 	  // Just return if an already-compiled AST was passed in.
 	  if (input.type === 'Program') {
 	    return input;
@@ -1653,8 +1687,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new yy.SourceLocation(options && options.srcName, locInfo);
 	  };
 
+	  var ast = _parser2['default'].parse(input);
+
+	  return ast;
+	}
+
+	function parse(input, options) {
+	  var ast = parseWithoutProcessing(input, options);
 	  var strip = new _whitespaceControl2['default'](options);
-	  return strip.accept(_parser2['default'].parse(input));
+
+	  return strip.accept(ast);
 	}
 
 /***/ }),
@@ -4138,7 +4180,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (this.hash) {
 	      this.hashes.push(this.hash);
 	    }
-	    this.hash = { values: [], types: [], contexts: [], ids: [] };
+	    this.hash = { values: {}, types: [], contexts: [], ids: [] };
 	  },
 	  popHash: function popHash() {
 	    var hash = this.hash;
@@ -4676,6 +4718,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  setupHelperArgs: function setupHelperArgs(helper, paramSize, params, useRegister) {
 	    var options = this.setupParams(helper, paramSize, params);
+	    options.loc = JSON.stringify(this.source.currentLocation);
 	    options = this.objectLiteral(options);
 	    if (useRegister) {
 	      this.useRegister('options');
@@ -4717,7 +4760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  if (requireTerminal) {
-	    return [compiler.aliasable('container.strict'), '(', stack, ', ', compiler.quotedString(parts[i]), ')'];
+	    return [compiler.aliasable('container.strict'), '(', stack, ', ', compiler.quotedString(parts[i]), ', ', JSON.stringify(compiler.source.currentLocation), ' )'];
 	  } else {
 	    return stack;
 	  }
