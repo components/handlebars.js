@@ -1,9 +1,9 @@
 /**!
 
  @license
- handlebars v4.5.3
+ handlebars v4.6.0
 
-Copyright (C) 2011-2017 by Yehuda Katz
+Copyright (C) 2011-2019 by Yehuda Katz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -111,7 +111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var runtime = _interopRequireWildcard(_handlebarsRuntime);
 
-	var _handlebarsNoConflict = __webpack_require__(38);
+	var _handlebarsNoConflict = __webpack_require__(42);
 
 	var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
 
@@ -207,7 +207,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.5.3';
+	var VERSION = '4.6.0';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
 	exports.COMPILER_REVISION = COMPILER_REVISION;
@@ -306,7 +306,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.createFrame = createFrame;
 	exports.blockParams = blockParams;
 	exports.appendContextPath = appendContextPath;
-
 	var escape = {
 	  '&': '&amp;',
 	  '<': '&lt;',
@@ -430,7 +429,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _Object$defineProperty = __webpack_require__(6)['default'];
 
 	exports.__esModule = true;
-
 	var errorProps = ['description', 'fileName', 'lineNumber', 'endLineNumber', 'message', 'name', 'number', 'stack'];
 
 	function Exception(message, node) {
@@ -978,7 +976,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (arguments.length != 2) {
 	      throw new _exception2['default']('#unless requires exactly one argument');
 	    }
-	    return instance.helpers['if'].call(this, conditional, { fn: options.inverse, inverse: options.fn, hash: options.hash });
+	    return instance.helpers['if'].call(this, conditional, {
+	      fn: options.inverse,
+	      inverse: options.fn,
+	      hash: options.hash
+	    });
 	  });
 	};
 
@@ -1021,21 +1023,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 
 	exports.__esModule = true;
-	var dangerousPropertyRegex = /^(constructor|__defineGetter__|__defineSetter__|__lookupGetter__|__proto__)$/;
-
-	exports.dangerousPropertyRegex = dangerousPropertyRegex;
 
 	exports['default'] = function (instance) {
-	  instance.registerHelper('lookup', function (obj, field) {
+	  instance.registerHelper('lookup', function (obj, field, options) {
 	    if (!obj) {
+	      // Note for 5.0: Change to "obj == null" in 5.0
 	      return obj;
 	    }
-	    if (dangerousPropertyRegex.test(String(field)) && !Object.prototype.propertyIsEnumerable.call(obj, field)) {
-	      return undefined;
-	    }
-	    return obj[field];
+	    return options.lookupProperty(obj, field);
 	  });
 	};
+
+	module.exports = exports['default'];
 
 /***/ }),
 /* 28 */
@@ -1169,8 +1168,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (typeof console !== 'undefined' && logger.lookupLevel(logger.level) <= level) {
 	      var method = logger.methodMap[level];
+	      // eslint-disable-next-line no-console
 	      if (!console[method]) {
-	        // eslint-disable-line no-console
 	        method = 'log';
 	      }
 
@@ -1213,6 +1212,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _Object$seal = __webpack_require__(34)['default'];
 
+	var _Object$keys = __webpack_require__(12)['default'];
+
 	var _interopRequireWildcard = __webpack_require__(1)['default'];
 
 	var _interopRequireDefault = __webpack_require__(2)['default'];
@@ -1237,6 +1238,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _helpers = __webpack_require__(9);
 
+	var _internalWrapHelper = __webpack_require__(38);
+
+	var _internalCreateNewLookupObject = __webpack_require__(39);
+
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
 	      currentRevision = _base.COMPILER_REVISION;
@@ -1256,7 +1261,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function template(templateSpec, env) {
-
 	  /* istanbul ignore next */
 	  if (!env) {
 	    throw new _exception2['default']('No environment passed to template');
@@ -1283,13 +1287,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    partial = env.VM.resolvePartial.call(this, partial, context, options);
 
-	    var optionsWithHooks = Utils.extend({}, options, { hooks: this.hooks });
+	    var extendedOptions = Utils.extend({}, options, {
+	      hooks: this.hooks,
+	      allowedProtoMethods: this.allowedProtoMethods,
+	      allowedProtoProperties: this.allowedProtoProperties
+	    });
 
-	    var result = env.VM.invokePartial.call(this, partial, context, optionsWithHooks);
+	    var result = env.VM.invokePartial.call(this, partial, context, extendedOptions);
 
 	    if (result == null && env.compile) {
 	      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
-	      result = options.partials[options.name](context, optionsWithHooks);
+	      result = options.partials[options.name](context, extendedOptions);
 	    }
 	    if (result != null) {
 	      if (options.indent) {
@@ -1313,14 +1321,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var container = {
 	    strict: function strict(obj, name, loc) {
 	      if (!obj || !(name in obj)) {
-	        throw new _exception2['default']('"' + name + '" not defined in ' + obj, { loc: loc });
+	        throw new _exception2['default']('"' + name + '" not defined in ' + obj, {
+	          loc: loc
+	        });
 	      }
 	      return obj[name];
+	    },
+	    lookupProperty: function lookupProperty(parent, propertyName) {
+	      var result = parent[propertyName];
+	      if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+	        return result;
+	      }
+	      var whitelist = typeof result === 'function' ? container.allowedProtoMethods : container.allowedProtoProperties;
+
+	      if (whitelist[propertyName] === true) {
+	        return result;
+	      }
+	      return undefined;
 	    },
 	    lookup: function lookup(depths, name) {
 	      var len = depths.length;
 	      for (var i = 0; i < len; i++) {
-	        if (depths[i] && depths[i][name] != null) {
+	        var result = depths[i] && container.lookupProperty(depths[i], name);
+	        if (result != null) {
 	          return depths[i][name];
 	        }
 	      }
@@ -1355,6 +1378,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value = value._parent;
 	      }
 	      return value;
+	    },
+	    mergeIfNeeded: function mergeIfNeeded(param, common) {
+	      var obj = param || common;
+
+	      if (param && common && param !== common) {
+	        obj = Utils.extend({}, common, param);
+	      }
+
+	      return obj;
 	    },
 	    // An empty object to use as replacement for null-contexts
 	    nullContext: _Object$seal({}),
@@ -1392,21 +1424,28 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  ret._setup = function (options) {
 	    if (!options.partial) {
-	      container.helpers = Utils.extend({}, env.helpers, options.helpers);
+	      var mergedHelpers = Utils.extend({}, env.helpers, options.helpers);
+	      wrapHelpersToPassLookupProperty(mergedHelpers, container);
+	      container.helpers = mergedHelpers;
 
 	      if (templateSpec.usePartial) {
-	        container.partials = Utils.extend({}, env.partials, options.partials);
+	        // Use mergeIfNeeded here to prevent compiling global partials multiple times
+	        container.partials = container.mergeIfNeeded(options.partials, env.partials);
 	      }
 	      if (templateSpec.usePartial || templateSpec.useDecorators) {
 	        container.decorators = Utils.extend({}, env.decorators, options.decorators);
 	      }
 
 	      container.hooks = {};
+	      container.allowedProtoProperties = _internalCreateNewLookupObject.createNewLookupObject(options.allowedProtoProperties);
+	      container.allowedProtoMethods = _internalCreateNewLookupObject.createNewLookupObject(options.allowedProtoMethods);
 
 	      var keepHelperInHelpers = options.allowCallsToHelperMissing || templateWasPrecompiledWithCompilerV7;
 	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelperInHelpers);
 	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelperInHelpers);
 	    } else {
+	      container.allowedProtoProperties = options.allowedProtoProperties;
+	      container.allowedProtoMethods = options.allowedProtoMethods;
 	      container.helpers = options.helpers;
 	      container.partials = options.partials;
 	      container.decorators = options.decorators;
@@ -1527,6 +1566,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return prog;
 	}
 
+	function wrapHelpersToPassLookupProperty(mergedHelpers, container) {
+	  _Object$keys(mergedHelpers).forEach(function (helperName) {
+	    var helper = mergedHelpers[helperName];
+	    mergedHelpers[helperName] = passLookupPropertyOption(helper, container);
+	  });
+	}
+
+	function passLookupPropertyOption(helper, container) {
+	  var lookupProperty = container.lookupProperty;
+	  return _internalWrapHelper.wrapHelper(helper, function (options) {
+	    return Utils.extend({ lookupProperty: lookupProperty }, options);
+	  });
+	}
+
 /***/ }),
 /* 34 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -1565,8 +1618,68 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 38 */
 /***/ (function(module, exports) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/* global window */
+	"use strict";
+
+	exports.__esModule = true;
+	exports.wrapHelper = wrapHelper;
+
+	function wrapHelper(helper, transformOptionsFn) {
+	  var wrapper = function wrapper() /* dynamic arguments */{
+	    var options = arguments[arguments.length - 1];
+	    arguments[arguments.length - 1] = transformOptionsFn(options);
+	    return helper.apply(this, arguments);
+	  };
+	  return wrapper;
+	}
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
 	'use strict';
+
+	var _Object$create = __webpack_require__(40)['default'];
+
+	exports.__esModule = true;
+	exports.createNewLookupObject = createNewLookupObject;
+
+	var _utils = __webpack_require__(4);
+
+	/**
+	 * Create a new object with "null"-prototype to avoid truthy results on prototype properties.
+	 * The resulting object can be used with "object[property]" to check if a property exists
+	 * @param {...object} sources a varargs parameter of source objects that will be merged
+	 * @returns {object}
+	 */
+
+	function createNewLookupObject() {
+	  for (var _len = arguments.length, sources = Array(_len), _key = 0; _key < _len; _key++) {
+	    sources[_key] = arguments[_key];
+	  }
+
+	  return _utils.extend.apply(undefined, [_Object$create(null)].concat(sources));
+	}
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(41), __esModule: true };
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var $ = __webpack_require__(8);
+	module.exports = function create(P, D){
+	  return $.create(P, D);
+	};
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
 
 	exports.__esModule = true;
 

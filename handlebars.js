@@ -1,9 +1,9 @@
 /**!
 
  @license
- handlebars v4.5.3
+ handlebars v4.6.0
 
-Copyright (C) 2011-2017 by Yehuda Katz
+Copyright (C) 2011-2019 by Yehuda Katz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -92,23 +92,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// Compiler imports
 
-	var _handlebarsCompilerAst = __webpack_require__(40);
+	var _handlebarsCompilerAst = __webpack_require__(44);
 
 	var _handlebarsCompilerAst2 = _interopRequireDefault(_handlebarsCompilerAst);
 
-	var _handlebarsCompilerBase = __webpack_require__(41);
+	var _handlebarsCompilerBase = __webpack_require__(45);
 
-	var _handlebarsCompilerCompiler = __webpack_require__(46);
+	var _handlebarsCompilerCompiler = __webpack_require__(50);
 
-	var _handlebarsCompilerJavascriptCompiler = __webpack_require__(49);
+	var _handlebarsCompilerJavascriptCompiler = __webpack_require__(51);
 
 	var _handlebarsCompilerJavascriptCompiler2 = _interopRequireDefault(_handlebarsCompilerJavascriptCompiler);
 
-	var _handlebarsCompilerVisitor = __webpack_require__(44);
+	var _handlebarsCompilerVisitor = __webpack_require__(48);
 
 	var _handlebarsCompilerVisitor2 = _interopRequireDefault(_handlebarsCompilerVisitor);
 
-	var _handlebarsNoConflict = __webpack_require__(39);
+	var _handlebarsNoConflict = __webpack_require__(43);
 
 	var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
 
@@ -194,7 +194,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var runtime = _interopRequireWildcard(_handlebarsRuntime);
 
-	var _handlebarsNoConflict = __webpack_require__(39);
+	var _handlebarsNoConflict = __webpack_require__(43);
 
 	var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
 
@@ -276,7 +276,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.5.3';
+	var VERSION = '4.6.0';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
 	exports.COMPILER_REVISION = COMPILER_REVISION;
@@ -375,7 +375,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.createFrame = createFrame;
 	exports.blockParams = blockParams;
 	exports.appendContextPath = appendContextPath;
-
 	var escape = {
 	  '&': '&amp;',
 	  '<': '&lt;',
@@ -499,7 +498,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _Object$defineProperty = __webpack_require__(7)['default'];
 
 	exports.__esModule = true;
-
 	var errorProps = ['description', 'fileName', 'lineNumber', 'endLineNumber', 'message', 'name', 'number', 'stack'];
 
 	function Exception(message, node) {
@@ -1047,7 +1045,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (arguments.length != 2) {
 	      throw new _exception2['default']('#unless requires exactly one argument');
 	    }
-	    return instance.helpers['if'].call(this, conditional, { fn: options.inverse, inverse: options.fn, hash: options.hash });
+	    return instance.helpers['if'].call(this, conditional, {
+	      fn: options.inverse,
+	      inverse: options.fn,
+	      hash: options.hash
+	    });
 	  });
 	};
 
@@ -1090,21 +1092,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 
 	exports.__esModule = true;
-	var dangerousPropertyRegex = /^(constructor|__defineGetter__|__defineSetter__|__lookupGetter__|__proto__)$/;
-
-	exports.dangerousPropertyRegex = dangerousPropertyRegex;
 
 	exports['default'] = function (instance) {
-	  instance.registerHelper('lookup', function (obj, field) {
+	  instance.registerHelper('lookup', function (obj, field, options) {
 	    if (!obj) {
+	      // Note for 5.0: Change to "obj == null" in 5.0
 	      return obj;
 	    }
-	    if (dangerousPropertyRegex.test(String(field)) && !Object.prototype.propertyIsEnumerable.call(obj, field)) {
-	      return undefined;
-	    }
-	    return obj[field];
+	    return options.lookupProperty(obj, field);
 	  });
 	};
+
+	module.exports = exports['default'];
 
 /***/ }),
 /* 29 */
@@ -1238,8 +1237,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (typeof console !== 'undefined' && logger.lookupLevel(logger.level) <= level) {
 	      var method = logger.methodMap[level];
+	      // eslint-disable-next-line no-console
 	      if (!console[method]) {
-	        // eslint-disable-line no-console
 	        method = 'log';
 	      }
 
@@ -1282,6 +1281,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _Object$seal = __webpack_require__(35)['default'];
 
+	var _Object$keys = __webpack_require__(13)['default'];
+
 	var _interopRequireWildcard = __webpack_require__(3)['default'];
 
 	var _interopRequireDefault = __webpack_require__(1)['default'];
@@ -1306,6 +1307,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _helpers = __webpack_require__(10);
 
+	var _internalWrapHelper = __webpack_require__(39);
+
+	var _internalCreateNewLookupObject = __webpack_require__(40);
+
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
 	      currentRevision = _base.COMPILER_REVISION;
@@ -1325,7 +1330,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function template(templateSpec, env) {
-
 	  /* istanbul ignore next */
 	  if (!env) {
 	    throw new _exception2['default']('No environment passed to template');
@@ -1352,13 +1356,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    partial = env.VM.resolvePartial.call(this, partial, context, options);
 
-	    var optionsWithHooks = Utils.extend({}, options, { hooks: this.hooks });
+	    var extendedOptions = Utils.extend({}, options, {
+	      hooks: this.hooks,
+	      allowedProtoMethods: this.allowedProtoMethods,
+	      allowedProtoProperties: this.allowedProtoProperties
+	    });
 
-	    var result = env.VM.invokePartial.call(this, partial, context, optionsWithHooks);
+	    var result = env.VM.invokePartial.call(this, partial, context, extendedOptions);
 
 	    if (result == null && env.compile) {
 	      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
-	      result = options.partials[options.name](context, optionsWithHooks);
+	      result = options.partials[options.name](context, extendedOptions);
 	    }
 	    if (result != null) {
 	      if (options.indent) {
@@ -1382,14 +1390,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var container = {
 	    strict: function strict(obj, name, loc) {
 	      if (!obj || !(name in obj)) {
-	        throw new _exception2['default']('"' + name + '" not defined in ' + obj, { loc: loc });
+	        throw new _exception2['default']('"' + name + '" not defined in ' + obj, {
+	          loc: loc
+	        });
 	      }
 	      return obj[name];
+	    },
+	    lookupProperty: function lookupProperty(parent, propertyName) {
+	      var result = parent[propertyName];
+	      if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+	        return result;
+	      }
+	      var whitelist = typeof result === 'function' ? container.allowedProtoMethods : container.allowedProtoProperties;
+
+	      if (whitelist[propertyName] === true) {
+	        return result;
+	      }
+	      return undefined;
 	    },
 	    lookup: function lookup(depths, name) {
 	      var len = depths.length;
 	      for (var i = 0; i < len; i++) {
-	        if (depths[i] && depths[i][name] != null) {
+	        var result = depths[i] && container.lookupProperty(depths[i], name);
+	        if (result != null) {
 	          return depths[i][name];
 	        }
 	      }
@@ -1424,6 +1447,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value = value._parent;
 	      }
 	      return value;
+	    },
+	    mergeIfNeeded: function mergeIfNeeded(param, common) {
+	      var obj = param || common;
+
+	      if (param && common && param !== common) {
+	        obj = Utils.extend({}, common, param);
+	      }
+
+	      return obj;
 	    },
 	    // An empty object to use as replacement for null-contexts
 	    nullContext: _Object$seal({}),
@@ -1461,21 +1493,28 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  ret._setup = function (options) {
 	    if (!options.partial) {
-	      container.helpers = Utils.extend({}, env.helpers, options.helpers);
+	      var mergedHelpers = Utils.extend({}, env.helpers, options.helpers);
+	      wrapHelpersToPassLookupProperty(mergedHelpers, container);
+	      container.helpers = mergedHelpers;
 
 	      if (templateSpec.usePartial) {
-	        container.partials = Utils.extend({}, env.partials, options.partials);
+	        // Use mergeIfNeeded here to prevent compiling global partials multiple times
+	        container.partials = container.mergeIfNeeded(options.partials, env.partials);
 	      }
 	      if (templateSpec.usePartial || templateSpec.useDecorators) {
 	        container.decorators = Utils.extend({}, env.decorators, options.decorators);
 	      }
 
 	      container.hooks = {};
+	      container.allowedProtoProperties = _internalCreateNewLookupObject.createNewLookupObject(options.allowedProtoProperties);
+	      container.allowedProtoMethods = _internalCreateNewLookupObject.createNewLookupObject(options.allowedProtoMethods);
 
 	      var keepHelperInHelpers = options.allowCallsToHelperMissing || templateWasPrecompiledWithCompilerV7;
 	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelperInHelpers);
 	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelperInHelpers);
 	    } else {
+	      container.allowedProtoProperties = options.allowedProtoProperties;
+	      container.allowedProtoMethods = options.allowedProtoMethods;
 	      container.helpers = options.helpers;
 	      container.partials = options.partials;
 	      container.decorators = options.decorators;
@@ -1596,6 +1635,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return prog;
 	}
 
+	function wrapHelpersToPassLookupProperty(mergedHelpers, container) {
+	  _Object$keys(mergedHelpers).forEach(function (helperName) {
+	    var helper = mergedHelpers[helperName];
+	    mergedHelpers[helperName] = passLookupPropertyOption(helper, container);
+	  });
+	}
+
+	function passLookupPropertyOption(helper, container) {
+	  var lookupProperty = container.lookupProperty;
+	  return _internalWrapHelper.wrapHelper(helper, function (options) {
+	    return Utils.extend({ lookupProperty: lookupProperty }, options);
+	  });
+	}
+
 /***/ }),
 /* 35 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -1634,8 +1687,68 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 39 */
 /***/ (function(module, exports) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/* global window */
+	"use strict";
+
+	exports.__esModule = true;
+	exports.wrapHelper = wrapHelper;
+
+	function wrapHelper(helper, transformOptionsFn) {
+	  var wrapper = function wrapper() /* dynamic arguments */{
+	    var options = arguments[arguments.length - 1];
+	    arguments[arguments.length - 1] = transformOptionsFn(options);
+	    return helper.apply(this, arguments);
+	  };
+	  return wrapper;
+	}
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
 	'use strict';
+
+	var _Object$create = __webpack_require__(41)['default'];
+
+	exports.__esModule = true;
+	exports.createNewLookupObject = createNewLookupObject;
+
+	var _utils = __webpack_require__(5);
+
+	/**
+	 * Create a new object with "null"-prototype to avoid truthy results on prototype properties.
+	 * The resulting object can be used with "object[property]" to check if a property exists
+	 * @param {...object} sources a varargs parameter of source objects that will be merged
+	 * @returns {object}
+	 */
+
+	function createNewLookupObject() {
+	  for (var _len = arguments.length, sources = Array(_len), _key = 0; _key < _len; _key++) {
+	    sources[_key] = arguments[_key];
+	  }
+
+	  return _utils.extend.apply(undefined, [_Object$create(null)].concat(sources));
+	}
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(42), __esModule: true };
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var $ = __webpack_require__(9);
+	module.exports = function create(P, D){
+	  return $.create(P, D);
+	};
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
 
 	exports.__esModule = true;
 
@@ -1656,7 +1769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ }),
-/* 40 */
+/* 44 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -1691,7 +1804,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ }),
-/* 41 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1704,15 +1817,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.parseWithoutProcessing = parseWithoutProcessing;
 	exports.parse = parse;
 
-	var _parser = __webpack_require__(42);
+	var _parser = __webpack_require__(46);
 
 	var _parser2 = _interopRequireDefault(_parser);
 
-	var _whitespaceControl = __webpack_require__(43);
+	var _whitespaceControl = __webpack_require__(47);
 
 	var _whitespaceControl2 = _interopRequireDefault(_whitespaceControl);
 
-	var _helpers = __webpack_require__(45);
+	var _helpers = __webpack_require__(49);
 
 	var Helpers = _interopRequireWildcard(_helpers);
 
@@ -1749,7 +1862,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 42 */
+/* 46 */
 /***/ (function(module, exports) {
 
 	// File ignored in coverage tests via setting in .istanbul.yml
@@ -2490,7 +2603,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ }),
-/* 43 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2499,7 +2612,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.__esModule = true;
 
-	var _visitor = __webpack_require__(44);
+	var _visitor = __webpack_require__(48);
 
 	var _visitor2 = _interopRequireDefault(_visitor);
 
@@ -2714,7 +2827,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ }),
-/* 44 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2857,7 +2970,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ }),
-/* 45 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3088,14 +3201,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 46 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* eslint-disable new-cap */
 
 	'use strict';
 
-	var _Object$create = __webpack_require__(47)['default'];
+	var _Object$create = __webpack_require__(41)['default'];
 
 	var _interopRequireDefault = __webpack_require__(1)['default'];
 
@@ -3110,7 +3223,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils = __webpack_require__(5);
 
-	var _ast = __webpack_require__(40);
+	var _ast = __webpack_require__(44);
 
 	var _ast2 = _interopRequireDefault(_ast);
 
@@ -3165,14 +3278,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    options.blockParams = options.blockParams || [];
 
 	    options.knownHelpers = _utils.extend(_Object$create(null), {
-	      'helperMissing': true,
-	      'blockHelperMissing': true,
-	      'each': true,
+	      helperMissing: true,
+	      blockHelperMissing: true,
+	      each: true,
 	      'if': true,
-	      'unless': true,
+	      unless: true,
 	      'with': true,
-	      'log': true,
-	      'lookup': true
+	      log: true,
+	      lookup: true
 	    }, options.knownHelpers);
 
 	    return this.accept(program);
@@ -3439,7 +3552,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // HELPERS
 	  opcode: function opcode(name) {
-	    this.opcodes.push({ opcode: name, args: slice.call(arguments, 1), loc: this.sourceNode[0].loc });
+	    this.opcodes.push({
+	      opcode: name,
+	      args: slice.call(arguments, 1),
+	      loc: this.sourceNode[0].loc
+	    });
 	  },
 
 	  addDepth: function addDepth(depth) {
@@ -3655,22 +3772,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 47 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(48), __esModule: true };
-
-/***/ }),
-/* 48 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var $ = __webpack_require__(9);
-	module.exports = function create(P, D){
-	  return $.create(P, D);
-	};
-
-/***/ }),
-/* 49 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3689,11 +3791,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils = __webpack_require__(5);
 
-	var _codeGen = __webpack_require__(50);
+	var _codeGen = __webpack_require__(52);
 
 	var _codeGen2 = _interopRequireDefault(_codeGen);
-
-	var _helpersLookup = __webpack_require__(28);
 
 	function Literal(value) {
 	  this.value = value;
@@ -3704,20 +3804,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	JavaScriptCompiler.prototype = {
 	  // PUBLIC API: You can override these methods in a subclass to provide
 	  // alternative compiled forms for name lookup and buffering semantics
-	  nameLookup: function nameLookup(parent, name /* , type*/) {
-	    if (_helpersLookup.dangerousPropertyRegex.test(name)) {
-	      var isEnumerable = [this.aliasable('container.propertyIsEnumerable'), '.call(', parent, ',', JSON.stringify(name), ')'];
-	      return ['(', isEnumerable, '?', _actualLookup(), ' : undefined)'];
-	    }
-	    return _actualLookup();
-
-	    function _actualLookup() {
-	      if (JavaScriptCompiler.isValidJavaScriptVariableName(name)) {
-	        return [parent, '.', name];
-	      } else {
-	        return [parent, '[', JSON.stringify(name), ']'];
-	      }
-	    }
+	  nameLookup: function nameLookup(parent, name /*,  type */) {
+	    return this.internalNameLookup(parent, name);
 	  },
 	  depthedLookup: function depthedLookup(name) {
 	    return [this.aliasable('container.lookup'), '(depths, "', name, '")'];
@@ -3753,6 +3841,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return this.quotedString('');
 	  },
 	  // END PUBLIC API
+	  internalNameLookup: function internalNameLookup(parent, name) {
+	    this.lookupPropertyFunctionIsUsed = true;
+	    return ['lookupProperty(', parent, ',', JSON.stringify(name), ')'];
+	  },
+
+	  lookupPropertyFunctionIsUsed: false,
 
 	  compile: function compile(environment, options, context, asObject) {
 	    this.environment = environment;
@@ -3811,7 +3905,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!this.decorators.isEmpty()) {
 	      this.useDecorators = true;
 
-	      this.decorators.prepend('var decorators = container.decorators;\n');
+	      this.decorators.prepend(['var decorators = container.decorators, ', this.lookupPropertyFunctionVarDeclaration(), ';\n']);
 	      this.decorators.push('return fn;');
 
 	      if (asObject) {
@@ -3924,6 +4018,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    });
 
+	    if (this.lookupPropertyFunctionIsUsed) {
+	      varDeclarations += ', ' + this.lookupPropertyFunctionVarDeclaration();
+	    }
+
 	    var params = ['container', 'depth0', 'helpers', 'partials', 'data'];
 
 	    if (this.useBlockParams || this.useDepths) {
@@ -4000,6 +4098,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    return this.source.merge();
+	  },
+
+	  lookupPropertyFunctionVarDeclaration: function lookupPropertyFunctionVarDeclaration() {
+	    return '\n      lookupProperty = container.lookupProperty || function(parent, propertyName) {\n        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {\n          return parent[propertyName];\n        }\n        return undefined\n    }\n    '.trim();
 	  },
 
 	  // [blockValue]
@@ -4804,6 +4906,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	})();
 
+	/**
+	 * @deprecated May be removed in the next major version
+	 */
 	JavaScriptCompiler.isValidJavaScriptVariableName = function (name) {
 	  return !JavaScriptCompiler.RESERVED_WORDS[name] && /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(name);
 	};
@@ -4831,7 +4936,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ }),
-/* 50 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* global define */
