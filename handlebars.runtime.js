@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.6.0
+ handlebars v4.7.0
 
 Copyright (C) 2011-2019 by Yehuda Katz
 
@@ -111,7 +111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var runtime = _interopRequireWildcard(_handlebarsRuntime);
 
-	var _handlebarsNoConflict = __webpack_require__(42);
+	var _handlebarsNoConflict = __webpack_require__(43);
 
 	var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
 
@@ -207,7 +207,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.6.0';
+	var VERSION = '4.7.0';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
 	exports.COMPILER_REVISION = COMPILER_REVISION;
@@ -1240,7 +1240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _internalWrapHelper = __webpack_require__(38);
 
-	var _internalCreateNewLookupObject = __webpack_require__(39);
+	var _internalProtoAccess = __webpack_require__(39);
 
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
@@ -1289,8 +1289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var extendedOptions = Utils.extend({}, options, {
 	      hooks: this.hooks,
-	      allowedProtoMethods: this.allowedProtoMethods,
-	      allowedProtoProperties: this.allowedProtoProperties
+	      protoAccessControl: this.protoAccessControl
 	    });
 
 	    var result = env.VM.invokePartial.call(this, partial, context, extendedOptions);
@@ -1329,12 +1328,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    lookupProperty: function lookupProperty(parent, propertyName) {
 	      var result = parent[propertyName];
+	      if (result == null) {
+	        return result;
+	      }
 	      if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
 	        return result;
 	      }
-	      var whitelist = typeof result === 'function' ? container.allowedProtoMethods : container.allowedProtoProperties;
 
-	      if (whitelist[propertyName] === true) {
+	      if (_internalProtoAccess.resultIsAllowed(result, container.protoAccessControl, propertyName)) {
 	        return result;
 	      }
 	      return undefined;
@@ -1417,9 +1418,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function main(context /*, options*/) {
 	      return '' + templateSpec.main(container, context, container.helpers, container.partials, data, blockParams, depths);
 	    }
+
 	    main = executeDecorators(templateSpec.main, main, container, options.depths || [], data, blockParams);
 	    return main(context, options);
 	  }
+
 	  ret.isTop = true;
 
 	  ret._setup = function (options) {
@@ -1437,15 +1440,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      container.hooks = {};
-	      container.allowedProtoProperties = _internalCreateNewLookupObject.createNewLookupObject(options.allowedProtoProperties);
-	      container.allowedProtoMethods = _internalCreateNewLookupObject.createNewLookupObject(options.allowedProtoMethods);
+	      container.protoAccessControl = _internalProtoAccess.createProtoAccessControl(options);
 
 	      var keepHelperInHelpers = options.allowCallsToHelperMissing || templateWasPrecompiledWithCompilerV7;
 	      _helpers.moveHelperToHooks(container, 'helperMissing', keepHelperInHelpers);
 	      _helpers.moveHelperToHooks(container, 'blockHelperMissing', keepHelperInHelpers);
 	    } else {
-	      container.allowedProtoProperties = options.allowedProtoProperties;
-	      container.allowedProtoMethods = options.allowedProtoMethods;
+	      container.protoAccessControl = options.protoAccessControl; // internal option
 	      container.helpers = options.helpers;
 	      container.partials = options.partials;
 	      container.decorators = options.decorators;
@@ -1640,6 +1641,84 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _Object$create = __webpack_require__(40)['default'];
 
+	var _interopRequireWildcard = __webpack_require__(1)['default'];
+
+	exports.__esModule = true;
+	exports.createProtoAccessControl = createProtoAccessControl;
+	exports.resultIsAllowed = resultIsAllowed;
+
+	var _createNewLookupObject = __webpack_require__(42);
+
+	var _logger = __webpack_require__(31);
+
+	var logger = _interopRequireWildcard(_logger);
+
+	function createProtoAccessControl(runtimeOptions) {
+	  var defaultMethodWhiteList = _Object$create(null);
+	  defaultMethodWhiteList['constructor'] = false;
+	  defaultMethodWhiteList['__defineGetter__'] = false;
+	  defaultMethodWhiteList['__defineSetter__'] = false;
+	  defaultMethodWhiteList['__lookupGetter__'] = false;
+
+	  var defaultPropertyWhiteList = _Object$create(null);
+	  // eslint-disable-next-line no-proto
+	  defaultPropertyWhiteList['__proto__'] = false;
+
+	  return {
+	    properties: {
+	      whitelist: _createNewLookupObject.createNewLookupObject(defaultPropertyWhiteList, runtimeOptions.allowedProtoProperties),
+	      defaultValue: runtimeOptions.allowProtoPropertiesByDefault
+	    },
+	    methods: {
+	      whitelist: _createNewLookupObject.createNewLookupObject(defaultMethodWhiteList, runtimeOptions.allowedProtoMethods),
+	      defaultValue: runtimeOptions.allowProtoMethodsByDefault
+	    }
+	  };
+	}
+
+	function resultIsAllowed(result, protoAccessControl, propertyName) {
+	  if (typeof result === 'function') {
+	    return checkWhiteList(protoAccessControl.methods, propertyName);
+	  } else {
+	    return checkWhiteList(protoAccessControl.properties, propertyName);
+	  }
+	}
+
+	function checkWhiteList(protoAccessControlForType, propertyName) {
+	  if (protoAccessControlForType.whitelist[propertyName] !== undefined) {
+	    return protoAccessControlForType.whitelist[propertyName] === true;
+	  }
+	  if (protoAccessControlForType.defaultValue !== undefined) {
+	    return protoAccessControlForType.defaultValue;
+	  }
+	  // eslint-disable-next-line no-console
+	  logger.log('error', 'Handlebars: Access has been denied to resolve the property "' + propertyName + '" because it is not an "own property" of its parent.\n' + 'You can add a runtime option to disable the check or this warning:\n' + 'See http://localhost:8080/api-reference/runtime-options.html#options-to-control-prototype-access for details');
+	  return false;
+	}
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(41), __esModule: true };
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var $ = __webpack_require__(8);
+	module.exports = function create(P, D){
+	  return $.create(P, D);
+	};
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _Object$create = __webpack_require__(40)['default'];
+
 	exports.__esModule = true;
 	exports.createNewLookupObject = createNewLookupObject;
 
@@ -1661,22 +1740,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(41), __esModule: true };
-
-/***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var $ = __webpack_require__(8);
-	module.exports = function create(P, D){
-	  return $.create(P, D);
-	};
-
-/***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
