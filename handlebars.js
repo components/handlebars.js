@@ -1,7 +1,7 @@
 /**!
 
  @license
- handlebars v4.7.0
+ handlebars v4.7.1
 
 Copyright (C) 2011-2019 by Yehuda Katz
 
@@ -178,7 +178,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Each of these augment the Handlebars object. No need to setup here.
 	// (This is done to easily share code between commonjs and browse envs)
 
-	var _handlebarsSafeString = __webpack_require__(33);
+	var _handlebarsSafeString = __webpack_require__(37);
 
 	var _handlebarsSafeString2 = _interopRequireDefault(_handlebarsSafeString);
 
@@ -190,7 +190,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Utils = _interopRequireWildcard(_handlebarsUtils);
 
-	var _handlebarsRuntime = __webpack_require__(34);
+	var _handlebarsRuntime = __webpack_require__(38);
 
 	var runtime = _interopRequireWildcard(_handlebarsRuntime);
 
@@ -276,7 +276,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _logger2 = _interopRequireDefault(_logger);
 
-	var VERSION = '4.7.0';
+	var _internalProtoAccess = __webpack_require__(33);
+
+	var VERSION = '4.7.1';
 	exports.VERSION = VERSION;
 	var COMPILER_REVISION = 8;
 	exports.COMPILER_REVISION = COMPILER_REVISION;
@@ -352,6 +354,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  unregisterDecorator: function unregisterDecorator(name) {
 	    delete this.decorators[name];
+	  },
+	  /**
+	   * Reset the memory of illegal property accesses that have already been logged.
+	   * @deprecated should only be used in handlebars test-cases
+	   */
+	  resetLoggedPropertyAccesses: function resetLoggedPropertyAccesses() {
+	    _internalProtoAccess.resetLoggedProperties();
 	  }
 	};
 
@@ -1256,6 +1265,129 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _Object$create = __webpack_require__(34)['default'];
+
+	var _Object$keys = __webpack_require__(13)['default'];
+
+	var _interopRequireWildcard = __webpack_require__(3)['default'];
+
+	exports.__esModule = true;
+	exports.createProtoAccessControl = createProtoAccessControl;
+	exports.resultIsAllowed = resultIsAllowed;
+	exports.resetLoggedProperties = resetLoggedProperties;
+
+	var _createNewLookupObject = __webpack_require__(36);
+
+	var _logger = __webpack_require__(32);
+
+	var logger = _interopRequireWildcard(_logger);
+
+	var loggedProperties = _Object$create(null);
+
+	function createProtoAccessControl(runtimeOptions) {
+	  var defaultMethodWhiteList = _Object$create(null);
+	  defaultMethodWhiteList['constructor'] = false;
+	  defaultMethodWhiteList['__defineGetter__'] = false;
+	  defaultMethodWhiteList['__defineSetter__'] = false;
+	  defaultMethodWhiteList['__lookupGetter__'] = false;
+
+	  var defaultPropertyWhiteList = _Object$create(null);
+	  // eslint-disable-next-line no-proto
+	  defaultPropertyWhiteList['__proto__'] = false;
+
+	  return {
+	    properties: {
+	      whitelist: _createNewLookupObject.createNewLookupObject(defaultPropertyWhiteList, runtimeOptions.allowedProtoProperties),
+	      defaultValue: runtimeOptions.allowProtoPropertiesByDefault
+	    },
+	    methods: {
+	      whitelist: _createNewLookupObject.createNewLookupObject(defaultMethodWhiteList, runtimeOptions.allowedProtoMethods),
+	      defaultValue: runtimeOptions.allowProtoMethodsByDefault
+	    }
+	  };
+	}
+
+	function resultIsAllowed(result, protoAccessControl, propertyName) {
+	  if (typeof result === 'function') {
+	    return checkWhiteList(protoAccessControl.methods, propertyName);
+	  } else {
+	    return checkWhiteList(protoAccessControl.properties, propertyName);
+	  }
+	}
+
+	function checkWhiteList(protoAccessControlForType, propertyName) {
+	  if (protoAccessControlForType.whitelist[propertyName] !== undefined) {
+	    return protoAccessControlForType.whitelist[propertyName] === true;
+	  }
+	  if (protoAccessControlForType.defaultValue !== undefined) {
+	    return protoAccessControlForType.defaultValue;
+	  }
+	  logUnexpecedPropertyAccessOnce(propertyName);
+	  return false;
+	}
+
+	function logUnexpecedPropertyAccessOnce(propertyName) {
+	  if (loggedProperties[propertyName] !== true) {
+	    loggedProperties[propertyName] = true;
+	    logger.log('error', 'Handlebars: Access has been denied to resolve the property "' + propertyName + '" because it is not an "own property" of its parent.\n' + 'You can add a runtime option to disable the check or this warning:\n' + 'See https://handlebarsjs.com/api-reference/runtime-options.html#options-to-control-prototype-access for details');
+	  }
+	}
+
+	function resetLoggedProperties() {
+	  _Object$keys(loggedProperties).forEach(function (propertyName) {
+	    delete loggedProperties[propertyName];
+	  });
+	}
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(35), __esModule: true };
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var $ = __webpack_require__(9);
+	module.exports = function create(P, D){
+	  return $.create(P, D);
+	};
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _Object$create = __webpack_require__(34)['default'];
+
+	exports.__esModule = true;
+	exports.createNewLookupObject = createNewLookupObject;
+
+	var _utils = __webpack_require__(5);
+
+	/**
+	 * Create a new object with "null"-prototype to avoid truthy results on prototype properties.
+	 * The resulting object can be used with "object[property]" to check if a property exists
+	 * @param {...object} sources a varargs parameter of source objects that will be merged
+	 * @returns {object}
+	 */
+
+	function createNewLookupObject() {
+	  for (var _len = arguments.length, sources = Array(_len), _key = 0; _key < _len; _key++) {
+	    sources[_key] = arguments[_key];
+	  }
+
+	  return _utils.extend.apply(undefined, [_Object$create(null)].concat(sources));
+	}
+
+/***/ }),
+/* 37 */
 /***/ (function(module, exports) {
 
 	// Build out our basic SafeString type
@@ -1274,12 +1406,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ }),
-/* 34 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _Object$seal = __webpack_require__(35)['default'];
+	var _Object$seal = __webpack_require__(39)['default'];
 
 	var _Object$keys = __webpack_require__(13)['default'];
 
@@ -1307,9 +1439,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _helpers = __webpack_require__(10);
 
-	var _internalWrapHelper = __webpack_require__(39);
+	var _internalWrapHelper = __webpack_require__(43);
 
-	var _internalProtoAccess = __webpack_require__(40);
+	var _internalProtoAccess = __webpack_require__(33);
 
 	function checkRevision(compilerInfo) {
 	  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
@@ -1651,24 +1783,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 35 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(36), __esModule: true };
+	module.exports = { "default": __webpack_require__(40), __esModule: true };
 
 /***/ }),
-/* 36 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	__webpack_require__(37);
+	__webpack_require__(41);
 	module.exports = __webpack_require__(21).Object.seal;
 
 /***/ }),
-/* 37 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	// 19.1.2.17 Object.seal(O)
-	var isObject = __webpack_require__(38);
+	var isObject = __webpack_require__(42);
 
 	__webpack_require__(18)('seal', function($seal){
 	  return function seal(it){
@@ -1677,7 +1809,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ }),
-/* 38 */
+/* 42 */
 /***/ (function(module, exports) {
 
 	module.exports = function(it){
@@ -1685,7 +1817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ }),
-/* 39 */
+/* 43 */
 /***/ (function(module, exports) {
 
 	"use strict";
@@ -1700,112 +1832,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return helper.apply(this, arguments);
 	  };
 	  return wrapper;
-	}
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _Object$create = __webpack_require__(41)['default'];
-
-	var _interopRequireWildcard = __webpack_require__(3)['default'];
-
-	exports.__esModule = true;
-	exports.createProtoAccessControl = createProtoAccessControl;
-	exports.resultIsAllowed = resultIsAllowed;
-
-	var _createNewLookupObject = __webpack_require__(43);
-
-	var _logger = __webpack_require__(32);
-
-	var logger = _interopRequireWildcard(_logger);
-
-	function createProtoAccessControl(runtimeOptions) {
-	  var defaultMethodWhiteList = _Object$create(null);
-	  defaultMethodWhiteList['constructor'] = false;
-	  defaultMethodWhiteList['__defineGetter__'] = false;
-	  defaultMethodWhiteList['__defineSetter__'] = false;
-	  defaultMethodWhiteList['__lookupGetter__'] = false;
-
-	  var defaultPropertyWhiteList = _Object$create(null);
-	  // eslint-disable-next-line no-proto
-	  defaultPropertyWhiteList['__proto__'] = false;
-
-	  return {
-	    properties: {
-	      whitelist: _createNewLookupObject.createNewLookupObject(defaultPropertyWhiteList, runtimeOptions.allowedProtoProperties),
-	      defaultValue: runtimeOptions.allowProtoPropertiesByDefault
-	    },
-	    methods: {
-	      whitelist: _createNewLookupObject.createNewLookupObject(defaultMethodWhiteList, runtimeOptions.allowedProtoMethods),
-	      defaultValue: runtimeOptions.allowProtoMethodsByDefault
-	    }
-	  };
-	}
-
-	function resultIsAllowed(result, protoAccessControl, propertyName) {
-	  if (typeof result === 'function') {
-	    return checkWhiteList(protoAccessControl.methods, propertyName);
-	  } else {
-	    return checkWhiteList(protoAccessControl.properties, propertyName);
-	  }
-	}
-
-	function checkWhiteList(protoAccessControlForType, propertyName) {
-	  if (protoAccessControlForType.whitelist[propertyName] !== undefined) {
-	    return protoAccessControlForType.whitelist[propertyName] === true;
-	  }
-	  if (protoAccessControlForType.defaultValue !== undefined) {
-	    return protoAccessControlForType.defaultValue;
-	  }
-	  // eslint-disable-next-line no-console
-	  logger.log('error', 'Handlebars: Access has been denied to resolve the property "' + propertyName + '" because it is not an "own property" of its parent.\n' + 'You can add a runtime option to disable the check or this warning:\n' + 'See http://localhost:8080/api-reference/runtime-options.html#options-to-control-prototype-access for details');
-	  return false;
-	}
-
-/***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(42), __esModule: true };
-
-/***/ }),
-/* 42 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var $ = __webpack_require__(9);
-	module.exports = function create(P, D){
-	  return $.create(P, D);
-	};
-
-/***/ }),
-/* 43 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _Object$create = __webpack_require__(41)['default'];
-
-	exports.__esModule = true;
-	exports.createNewLookupObject = createNewLookupObject;
-
-	var _utils = __webpack_require__(5);
-
-	/**
-	 * Create a new object with "null"-prototype to avoid truthy results on prototype properties.
-	 * The resulting object can be used with "object[property]" to check if a property exists
-	 * @param {...object} sources a varargs parameter of source objects that will be merged
-	 * @returns {object}
-	 */
-
-	function createNewLookupObject() {
-	  for (var _len = arguments.length, sources = Array(_len), _key = 0; _key < _len; _key++) {
-	    sources[_key] = arguments[_key];
-	  }
-
-	  return _utils.extend.apply(undefined, [_Object$create(null)].concat(sources));
 	}
 
 /***/ }),
@@ -3272,7 +3298,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var _Object$create = __webpack_require__(41)['default'];
+	var _Object$create = __webpack_require__(34)['default'];
 
 	var _interopRequireDefault = __webpack_require__(1)['default'];
 
