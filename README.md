@@ -1,12 +1,12 @@
 Handlebars.js
 =============
 
-Shim repository for [Handlebars.js](http://handlebarsjs.com).
+Shim repository for [Handlebars.js](https://handlebarsjs.com).
 
 Package Managers
 ----------------
 
-* [Bower](http://twitter.github.com/bower/): `handlebars`
-* [Component](http://github.com/component/component): `components/handlebars.js`
-* [Composer](http://packagist.org/packages/components/handlebars.js): `components/handlebars.js`
-* [jspm](http://jspm.io): `github:components/handlebars.js`
+* [Bower](https://bower.io/): `handlebars`
+* [Component](https://github.com/component/component): `components/handlebars.js`
+* [Composer](https://packagist.org/packages/components/handlebars.js): `components/handlebars.js`
+* [jspm](https://jspm.io): `github:components/handlebars.js`

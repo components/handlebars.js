@@ -1,7 +1,7 @@
 {
     "name": "components/handlebars.js",
     "description": "Handlebars.js and Mustache are both logicless templating languages that keep the view and the code separated like we all know they should be.",
-    "homepage": "http://handlebarsjs.com",
+    "homepage": "https://handlebarsjs.com",
     "license": "MIT",
     "type": "component",
     "keywords": [
@@ -11,8 +11,7 @@
     ],
     "authors": [
         {
-            "name": "Chris Wanstrath",
-            "homepage": "http://chriswanstrath.com"
+            "name": "Chris Wanstrath"
         }
     ],
     "require": {
