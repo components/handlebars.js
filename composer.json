@@ -14,9 +14,6 @@
             "name": "Chris Wanstrath"
         }
     ],
-    "require": {
-        "robloach/component-installer": "*"
-    },
     "extra": {
         "component": {
             "name": "handlebars",
